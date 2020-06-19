@@ -11,6 +11,13 @@ This project is based on [mysql-connector-java](https://github.com/mysql/mysql-c
 https://raw.githubusercontent.com/kubesys/kubernetes-synchronizer/master/kubernetes-synchronizer.yaml
 ```
 
+## Build
+
+```
+cp target/kubernetes-synchronizer-[version]-jar-with-dependencies.jar docker/kubernetes-synchronizer.jar
+docker build docker/ -t registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-synchronizer:[version]
+```
+
 ## Roadmap
 
 - Prototype

@@ -12,7 +12,7 @@
 	<url>http://maven.apache.org</url>
 
 	<properties>
-		<kubeclient.version>0.5</kubeclient.version>
+		<kubeclient.version>0.6</kubeclient.version>
 		<jdbc.version>8.0.19</jdbc.version>
 	</properties>
 
