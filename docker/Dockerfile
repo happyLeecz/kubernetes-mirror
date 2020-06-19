@@ -1,6 +1,6 @@
 FROM openjdk:11.0.7-slim
 
-ADD kubernetes-synchronizer /home/kubernetes-synchronizer
+ADD kubernetes-synchronizer.jar /home/kubernetes-synchronizer.jar
 
 WORKDIR /home
 

@@ -76,19 +76,19 @@ spec:
 apiVersion: "apps/v1"
 kind: "Deployment"
 metadata: 
-  name: "kubernetes-synchronizer"
+  name: "kube-database"
   namespace: "kube-system"
   labels: 
-    name: "kubernetes-synchronizer"
+    name: "kube-database"
 spec: 
   replicas: 1
   selector: 
     matchLabels:
-      name: "kubernetes-synchronizer"
+      name: "kube-database"
   template: 
     metadata: 
       labels: 
-        name: "kubernetes-synchronizer"
+        name: "kube-database"
     spec:
       nodeSelector:
         node-role.kubernetes.io/master: ""
@@ -120,10 +120,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kubernetes-synchronizer
+  name: kube-database
   namespace: kube-system
   labels: 
-    name: kubernetes-synchronizer
+    name: kube-database
 spec:
   type: NodePort
   ports:
@@ -138,4 +138,4 @@ spec:
     name: adminer-port
     nodePort: 32080
   selector:
-    name: kubernetes-synchronizer
+    name: kube-database
