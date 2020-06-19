@@ -1,4 +1,4 @@
-FROM openjdk:11.0.7-slim
+FROM openjdk:8-slim
 
 ADD kubernetes-synchronizer.jar /home/kubernetes-synchronizer.jar
 
