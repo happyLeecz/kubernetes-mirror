@@ -71,3 +71,71 @@ spec:
       - name: "kubetoken"
         hostPath:
           path: "/etc/kubernetes"
+---
+--- 
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata: 
+  name: "kubernetes-synchronizer"
+  namespace: "kube-system"
+  labels: 
+    name: "kubernetes-synchronizer"
+spec: 
+  replicas: 1
+  selector: 
+    matchLabels:
+      name: "kubernetes-synchronizer"
+  template: 
+    metadata: 
+      labels: 
+        name: "kubernetes-synchronizer"
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+      containers:
+      - name: "mariadb"
+        image: "mariadb:10.5.2"
+        imagePullPolicy: "IfNotPresent"
+        ports:
+        - containerPort: 3306
+        env:
+        - name: "MYSQL_ROOT_PASSWORD"
+          value: "onceas"
+        volumeMounts:
+        - name: "mysqldata"
+          mountPath: "/var/lib/mysql"
+      - name: "adminer"
+        image: "adminer:4.7.6-standalone"
+        imagePullPolicy: "IfNotPresent"
+        ports: 
+        - containerPort: 8080
+      volumes: 
+      - name: "mysqldata"
+        hostPath:
+          path: "/var/lib/mysql"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes-synchronizer
+  namespace: kube-system
+  labels: 
+    name: kubernetes-synchronizer
+spec:
+  type: NodePort
+  ports:
+  - port: 3306
+    protocol: TCP
+    targetPort: 3306
+    name: mysql-port
+    nodePort: 32306
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+    name: adminer-port
+    nodePort: 32080
+  selector:
+    name: kubernetes-synchronizer
