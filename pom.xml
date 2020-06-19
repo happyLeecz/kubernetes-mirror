@@ -5,7 +5,7 @@
 
 	<groupId>com.github.kubesys</groupId>
 	<artifactId>kubernetes-synchronizer</artifactId>
-	<version>1.8.3</version>
+	<version>0.1</version>
 	<packaging>jar</packaging>
 
 	<name>kubernetes-synchronizer</name>
