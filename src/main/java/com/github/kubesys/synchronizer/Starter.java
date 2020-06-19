@@ -7,6 +7,7 @@ import java.sql.DriverManager;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.kubesys.synchronizer.clients.MysqlClient;
@@ -23,6 +24,8 @@ import io.github.kubesys.KubernetesConstants;
  * 
  **/
 public class Starter {
+	
+	protected static final Logger m_logger = Logger.getLogger(Starter.class.getName());
 	
 	/**
 	 * 
@@ -61,32 +64,35 @@ public class Starter {
 		for (String kind : targets) {
 			String tableName = kubeClient.getConfig().getName(kind);
 			try {
-				if (!sqlClient.hasTable("kube", tableName)) {
-					sqlClient.createTable("kube", tableName);
+				if (!sqlClient.hasTable(Constants.DB, tableName)) {
+					sqlClient.createTable(Constants.DB, tableName);
 				}
-				System.out.println("create table " + tableName + " successfully.");
+				m_logger.info("create table " + tableName + " successfully.");
 			} catch (Exception e) {
-				System.out.println("fail to create table " + tableName + ":" + e);
+				m_logger.severe("fail to create table " + tableName + ":" + e);
 			}
 			
-			kubeClient.watchResources(kind, "allNS", new Synchronizer(kind, kubeClient, sqlClient));
+			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
+										new Synchronizer(kind, kubeClient, sqlClient));
 		}
 	}
 
+	public static final String NAME = "kubernetes-synchronizer";
+	
 	protected static void createListenTargetsByConfifMap(KubernetesClient kube) throws Exception {
-		JsonNode node = null;
+		
 		try {
-			node = kube.getResource("ConfigMap", "kube-system", "kubeext-mysql-exporter");
+			JsonNode node = kube.getResource(Constants.KIND_CONFIGMAP, 
+					Constants.NS_KUBESYSTEM, NAME);
+			Iterator<JsonNode> elements = node.get(Constants.YAML_DATA).elements();
+			while (elements.hasNext()) {
+				String asText = elements.next().asText();
+				targets.add(asText);
+			}
 		} catch (Exception ex) {
-			System.err.println("ConfigMap 'kubeext-mysql-exporter' is not ready in namespace 'kube-system'.");
-			ex.printStackTrace();
+			m_logger.severe("ConfigMap 'kubernetes-synchronizer' is not "
+					+ "				ready in namespace 'kube-system'.");
 			System.exit(1);
-		}
-		Iterator<JsonNode> elements = node.get("data").elements();
-		while (elements.hasNext()) {
-			String asText = elements.next().asText();
-			System.out.println("# " + asText);
-			targets.add(asText);
 		}
 	}
 	

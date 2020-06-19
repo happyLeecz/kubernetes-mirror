@@ -21,7 +21,15 @@ public final class Constants {
 	 */
 	public static final String KIND_CUSTOMRESOURCEDEFINTION         = "CustomResourceDefinition";
 	
+	public static final String KIND_CONFIGMAP                       = "ConfigMap";
+	
+	
+	public static final String NS_KUBESYSTEM                        = "kube-system";
+	
+	
 	public static final String YAML_KIND                            = "kind";
+	
+	public static final String YAML_DATA                            = "data";
 	
 	public static final String YAML_SPEC                            = "spec";
 	
