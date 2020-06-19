@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.kubesys.synchronizer.clients.MysqlClient;
 import com.mysql.cj.jdbc.Driver;
 
 import io.github.kubesys.KubernetesClient;
@@ -25,12 +24,20 @@ import io.github.kubesys.KubernetesConstants;
  **/
 public class Starter {
 	
+	/**
+	 * m_logger
+	 */
 	protected static final Logger m_logger = Logger.getLogger(Starter.class.getName());
 	
 	/**
-	 * 
+	 * targets
 	 */
-	public static final Set<String> targets = new HashSet<>(); 
+	public static final Set<String> synchTargets = new HashSet<>(); 
+	
+	/**
+	 * name
+	 */
+	public static final String NAME = "kubernetes-synchronizer";
 	
 	/*****************************************************************************************
 	 * 
@@ -38,13 +45,13 @@ public class Starter {
 	 * 
 	 *****************************************************************************************/
 
-	
 	public static void main(String[] args) throws Exception {
 		
 		KubernetesClient kubeClient = getKubeClient();
-		MysqlClient sqlClient = getMysqlClient();
-		createListenTargetsByConfifMap(kubeClient);
-		watchKubernetesCoreKinds(kubeClient, sqlClient);
+		Synchronizer sqlClient = getSynchronizer();
+		createSynchTargetsFromConfifMap(kubeClient.getResource(
+					Constants.KIND_CONFIGMAP, Constants.NS_KUBESYSTEM, NAME));
+		SynchFromKubeToMysql(kubeClient, sqlClient);
 	}
 
 	
@@ -54,15 +61,17 @@ public class Starter {
 	 * 
 	 *****************************************************************************************/
 	
-	protected static void watchKubernetesCRDKinds(KubernetesClient kubeClient, MysqlClient sqlClient) throws Exception {
+	protected static void watchKubernetesCRDKinds(KubernetesClient kubeClient, Synchronizer sqlClient) throws Exception {
 		kubeClient.watchResources(Constants.KIND_CUSTOMRESOURCEDEFINTION, 
 							KubernetesConstants.VALUE_ALL_NAMESPACES, 
-							new Synchronizer(Constants.KIND_CUSTOMRESOURCEDEFINTION, kubeClient, sqlClient));
+							new Listener(Constants.KIND_CUSTOMRESOURCEDEFINTION, kubeClient, sqlClient));
 	}
 
-	protected static void watchKubernetesCoreKinds(KubernetesClient kubeClient, MysqlClient sqlClient) throws Exception {
-		for (String kind : targets) {
+	protected static void SynchFromKubeToMysql(KubernetesClient kubeClient, Synchronizer sqlClient) throws Exception {
+		
+		for (String kind : synchTargets) {
 			String tableName = kubeClient.getConfig().getName(kind);
+			
 			try {
 				if (!sqlClient.hasTable(Constants.DB, tableName)) {
 					sqlClient.createTable(Constants.DB, tableName);
@@ -73,21 +82,17 @@ public class Starter {
 			}
 			
 			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
-										new Synchronizer(kind, kubeClient, sqlClient));
+										new Listener(kind, kubeClient, sqlClient));
 		}
 	}
 
-	public static final String NAME = "kubernetes-synchronizer";
-	
-	protected static void createListenTargetsByConfifMap(KubernetesClient kube) throws Exception {
+	protected static void createSynchTargetsFromConfifMap(JsonNode node) throws Exception {
 		
 		try {
-			JsonNode node = kube.getResource(Constants.KIND_CONFIGMAP, 
-					Constants.NS_KUBESYSTEM, NAME);
 			Iterator<JsonNode> elements = node.get(Constants.YAML_DATA).elements();
 			while (elements.hasNext()) {
 				String asText = elements.next().asText();
-				targets.add(asText);
+				synchTargets.add(asText);
 			}
 		} catch (Exception ex) {
 			m_logger.severe("ConfigMap 'kubernetes-synchronizer' is not "
@@ -110,14 +115,14 @@ public class Starter {
 								: new KubernetesClient(url, token);
 	}
 
-	private static MysqlClient getMysqlClient() throws Exception {
+	private static Synchronizer getSynchronizer() throws Exception {
 		
 		String jdbc = System.getenv("JDBC") == null ? Constants.JDBC : System.getenv("JDBC");
 		String user = System.getenv("USER") == null ? Constants.USER : System.getenv("USER");
 		String pwd  = System.getenv("PWD") == null ? Constants.PWD : System.getenv("PWD");
 
 		Class.forName(Driver.class.getName());
-		MysqlClient sqlClient =  new MysqlClient(
+		Synchronizer sqlClient =  new Synchronizer(
 				DriverManager.getConnection(jdbc, user, pwd));
 		
 		if (!sqlClient.hasDatabase(Constants.DB)) {

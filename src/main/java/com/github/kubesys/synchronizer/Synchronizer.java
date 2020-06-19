@@ -1,187 +1,113 @@
-/**
+/*
+
  * Copyright (2019, ) Institute of Software, Chinese Academy of Sciences
  */
 package com.github.kubesys.synchronizer;
 
-import java.util.logging.Logger;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.github.kubesys.synchronizer.clients.MysqlClient;
-
-import io.github.kubesys.KubernetesClient;
-import io.github.kubesys.KubernetesConstants;
-import io.github.kubesys.KubernetesException;
-import io.github.kubesys.KubernetesWatcher;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 /**
- * @author wuheng
- * @since 2019.4.20
+ * @author wuheng@otcaix.iscas.ac.cn
+ * 
+ * @version 1.2.0
+ * @since   2020/4/23
+ *
  */
-public class Synchronizer extends KubernetesWatcher {
+public class Synchronizer {
 
-	public static final Logger m_logger = Logger.getLogger(Synchronizer.class.getName());
-	
-	/**
-	 * kind
-	 */
-	protected final String kind;
+	protected final Connection conn;
 
-	/**
-	 * client
-	 */
-	protected final KubernetesClient kubeClient;
-
-	/**
-	 * client
-	 */
-	protected final MysqlClient sqlClient;
-
-	public Synchronizer(String kind, KubernetesClient kubeClient, MysqlClient sqlClient) {
+	public Synchronizer(Connection conn) {
 		super();
-		this.kind = kind;
-		this.kubeClient = kubeClient;
-		this.sqlClient = sqlClient;
+		this.conn = conn;
+	}
+	
+	/**
+	 * @param name                db name
+	 * @return                    true or false
+	 * @throws Exception          exception
+	 */
+	public boolean hasDatabase(String name) throws Exception {
+		String sql = "SELECT * FROM information_schema.SCHEMATA where SCHEMA_NAME='" + name + "'";
+		return query(null, sql);
+	}
+	
+	/**
+	 * create database
+	 * 
+	 * @throws Exception mysql exception
+	 */
+	public boolean createDatabase(String name) throws Exception {
+		String sql = "CREATE DATABASE " + name;
+		return exec(null, sql);
+	}
+	
+	/**
+	 * @return delete database
+	 * @throws Exception mysql exception
+	 */
+	public boolean dropDatabase(String name) throws Exception {
+		String sql = "DROP DATABASE " + name;
+		return exec(null, sql);
+	}
+	
+	/**
+	 * @param name  class name
+	 * @return true if the table exists, otherwise return false
+	 * @throws Exception mysql exception
+	 */
+	public boolean hasTable(String dbName, String tableName) throws Exception {
+		String sql = "SELECT DISTINCT t.table_name, n.SCHEMA_NAME FROM "
+				+ "information_schema.TABLES t, information_schema.SCHEMATA n "
+				+ "WHERE t.table_name = '" + tableName + "' AND n.SCHEMA_NAME = '" + dbName + "'";
+		return query(dbName, sql);
 	}
 
-
-	/******************************************************
-	 * 
-	 * Lifecycle
-	 * 
-	 ******************************************************/
-	public void doAdded(JsonNode json) {
-
-		if (Constants.KIND_CUSTOMRESOURCEDEFINTION.equals(kind)) {
-			
-			String newKind = json.get(Constants.YAML_SPEC).get(Constants.YAML_SPEC_NAMES)
-										.get(Constants.YAML_SPEC_NAMES_KIND).asText();
-			
-			if (!Starter.targets.contains(newKind)) {
-				return;
-			}
-			
-			String tableName = kubeClient.getConfig().getName(newKind);
-			try {
-				if (!sqlClient.hasTable(Constants.DB, tableName)) {
-					sqlClient.createTable(Constants.DB, tableName);
-				}
-				m_logger.info("create table " + tableName + " successfully.");
-			} catch (Exception e) {
-				m_logger.severe("fail to create table " + tableName + ":" + e);
-			}
-			
-			kubeClient.watchResources(newKind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
-									new Synchronizer(newKind, kubeClient, sqlClient));
-		} 
-
-		
-		ObjectNode yaml = getJsonWithoutAnotation(json);
-		String itemName = getName(json);
-		String itemNS = getNamespace(json);
-
-		String sql = "INSERT INTO " + kubeClient.getConfig().getName(kind) + " VALUES ('" 
-							+ itemName + "', '"
-							+ itemNS + "', '"
-							+ yaml.toString() + "', " 
-							+ true + ")";
-		
-		if (!doSql(sql, itemName, itemNS, Constants.SQL_INSERT)) {
-			doModified(yaml);
+	/**
+	 * @param clazz class
+	 * @return sql
+	 * @throws Exception mysql exception
+	 */
+	public  boolean createTable(String dbName, String tableName) throws Exception {
+		String sql = "CREATE TABLE " + tableName + " (name varchar(250), namespace varchar(250), data json, valid boolean DEFAULT TRUE, primary key(name))";
+		return exec(dbName, sql);
+	}
+	
+	/**
+	 * @param clazz class
+	 * @return sql
+	 * @throws Exception mysql exception
+	 */
+	public  boolean dropTable(String dbName, String tableName) throws Exception {
+		String sql = "DROP TABLE " + tableName;
+		return exec(dbName, sql);
+	}
+	
+	public synchronized  boolean query(String dbName, String sql) throws Exception {
+		if (dbName != null) {
+			conn.setCatalog(dbName);
 		}
-
+		PreparedStatement pstmt = conn.prepareStatement(sql);
+		ResultSet rs = pstmt.executeQuery();
+		boolean success = rs.next();
+		rs.close();
+		pstmt.close();
+		return success;
 	}
-
-	public void doModified(JsonNode json) {
-		
-		ObjectNode node = getJsonWithoutAnotation(json);
-
-		String itemName = getName(json);
-		String itemNS = getNamespace(json);
-		
-		String sql = "UPDATE " + kubeClient.getConfig().getName(kind) 
-										+ " SET data = '" + node  + "' WHERE"
-										+ " name = '" + itemName + "' and "
-										+ " namespace = '" + itemNS + "'";
-		
-		doSql(sql, itemName, itemNS, Constants.SQL_UPDATE);
-
-	}
-
-	public void doDeleted(JsonNode json) {
-
-		String itemName = getName(json);
-		String itemNS = getNamespace(json);
-		
-		String sql = "DELETE FROM " + kubeClient.getConfig().getName(kind) 
-				+ " WHERE name = '" + itemName + "' and namespace = '" + itemNS + "'";
-		
-		doSql(sql, itemName, itemNS, Constants.SQL_DELETE);
-	}
-
-	/******************************************************
-	 * 
-	 * Utils
-	 * 
-	 ******************************************************/
-	protected boolean doSql(String sql, String name, String ns, String operation) {
-		
-		String rsql = sql.replaceAll("\\\"", "\\\\\\\"");
-
+	
+	public synchronized boolean exec(String dbName, String sql) throws Exception {
 		try {
-			sqlClient.exec(Constants.DB, rsql);
-			m_logger.info("\t" + operation + " object '<" + name + "," + ns 
-					+ ">' in table '" + kind.toLowerCase() + "' successfully.");
-			return true;
+			if (dbName != null) {
+				conn.setCatalog(dbName);
+			}
+			PreparedStatement pstmt = conn.prepareStatement(sql); 
+			boolean success = pstmt.execute();
+			pstmt.close();
+			return success;
 		} catch (Exception ex) {
-			m_logger.severe(rsql + "," + ex);
-			return false;
+			throw new Exception(sql + ";" + ex);
 		}
 	}
-
-	/**
-	 * @param json                            json
-	 * @return                                node
-	 */
-	@SuppressWarnings("deprecation")
-	protected ObjectNode getJsonWithoutAnotation(JsonNode json) {
-		ObjectNode yaml = json.deepCopy();
-		ObjectNode meta = yaml.get(Constants.YAML_METADATA).deepCopy();
-		if (meta.has(Constants.YAML_METADATA_ANNOTATIONS)) {
-			meta.remove(Constants.YAML_METADATA_ANNOTATIONS);
-		}
-		yaml.put(Constants.YAML_METADATA, meta);
-		return yaml;
-	}
-	
-	/**
-	 * @param json                           json
-	 * @return                               name
-	 */
-	protected String getName(JsonNode json) {
-		return json.get(Constants.YAML_METADATA)
-					.get(Constants.YAML_METADATA_NAME).asText();
-	}
-	
-	/**
-	 * @param json                           json
-	 * @return                               namespace
-	 */
-	protected String getNamespace(JsonNode json) {
-		JsonNode meta = json.get(Constants.YAML_METADATA);
-		return (meta.has(Constants.YAML_METADATA_NAMESPACE)) 
-				? meta.get(Constants.YAML_METADATA_NAMESPACE).asText() : "default";
-	}
-
-	@Override
-	public void doOnClose(KubernetesException exception) {
-		
-		m_logger.severe(exception.toString());
-		if (Starter.targets.contains(kind)) {
-			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
-								new Synchronizer(kind, kubeClient, sqlClient));
-		}
-		m_logger.info("start synchronizer '" + kind + "'.");
-	}
-
 }

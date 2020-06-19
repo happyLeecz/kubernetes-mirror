@@ -20,9 +20,6 @@ data:
   StatefulSet: StatefulSet
   CronJob: CronJob
   Job: Job
-  Backend: Backend
-  Frontend: Frontend
-  Image: Image
   NetworkPolicy: NetworkPolicy
   Ingress: Ingress
   ClusterRoleBinding: ClusterRoleBinding
