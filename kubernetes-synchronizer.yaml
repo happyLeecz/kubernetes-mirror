@@ -1,3 +1,4 @@
+---
 kind: ConfigMap
 apiVersion: v1
 metadata:
@@ -71,7 +72,7 @@ spec:
       - name: "kubetoken"
         hostPath:
           path: "/etc/kubernetes"
----
+--- 
 --- 
 apiVersion: "apps/v1"
 kind: "Deployment"
