@@ -131,6 +131,11 @@ public class Listener extends KubernetesWatcher {
 			meta.remove(Constants.YAML_METADATA_MANAGEDFIELDS);
 		}
 		
+		// if it is Deploymnet
+		
+		if (json.get("kind").asText().equals("Deployment")) {
+			yaml.remove("status");
+		}
 		yaml.put(Constants.YAML_METADATA, meta);
 		return yaml.toString();
 	}

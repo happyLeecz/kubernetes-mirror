@@ -3,7 +3,6 @@
  */
 package com.github.kubesys.synchronizer;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -107,7 +106,7 @@ public class Starter {
 	}
 
 	
-	private static DruidDataSource createDataSource() throws IOException {
+	private static DruidDataSource createDataSource() throws Exception {
         Properties props = new Properties();
         props.put("druid.driverClassName", Driver.class.getName());
         props.put("druid.url", Constants.JDBC);

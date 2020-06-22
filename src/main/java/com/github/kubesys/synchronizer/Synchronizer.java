@@ -66,7 +66,7 @@ public class Synchronizer {
 	 * @return                    true or false
 	 * @throws Exception          exception
 	 */
-	public boolean hasDatabase(String name) throws Exception {
+	public synchronized boolean hasDatabase(String name) throws Exception {
 		return execWithResult(null, CHECK_DATABASE.replace(LABEL_DATABASE, name));
 	}
 	
@@ -75,7 +75,7 @@ public class Synchronizer {
 	 * 
 	 * @throws Exception mysql exception
 	 */
-	public boolean createDatabase(String name) throws Exception {
+	public synchronized boolean createDatabase(String name) throws Exception {
 		return exec(null, CREATE_DATABASE.replace(LABEL_DATABASE, name));
 	}
 	
@@ -83,7 +83,7 @@ public class Synchronizer {
 	 * @return delete database
 	 * @throws Exception mysql exception
 	 */
-	public boolean dropDatabase(String name) throws Exception {
+	public synchronized boolean dropDatabase(String name) throws Exception {
 		return exec(null, DELETE_DATABASE.replace(LABEL_DATABASE, name));
 	}
 	
@@ -92,7 +92,7 @@ public class Synchronizer {
 	 * @return true if the table exists, otherwise return false
 	 * @throws Exception mysql exception
 	 */
-	public boolean hasTable(String dbName, String tableName) throws Exception {
+	public synchronized boolean hasTable(String dbName, String tableName) throws Exception {
 		if (!hasDatabase(dbName)) {
 			return false;
 		}
@@ -105,7 +105,7 @@ public class Synchronizer {
 	 * @return sql
 	 * @throws Exception mysql exception
 	 */
-	public boolean createTable(String dbName, String tableName) throws Exception {
+	public synchronized boolean createTable(String dbName, String tableName) throws Exception {
 		if (!hasDatabase(dbName)) {
 			createDatabase(dbName);
 		}
@@ -117,7 +117,7 @@ public class Synchronizer {
 	 * @return sql
 	 * @throws Exception mysql exception
 	 */
-	public boolean dropTable(String dbName, String tableName) throws Exception {
+	public synchronized boolean dropTable(String dbName, String tableName) throws Exception {
 		return exec(dbName, DELETE_TABLE.replace(LABEL_TABLE, tableName));
 	}
 	
@@ -134,7 +134,7 @@ public class Synchronizer {
 					.replace(LABEL_TABLE, table)
 					.replace(LABEL_NAME, name)
 					.replace(LABEL_NAMESPACE, namespace)
-					.replace(LABEL_JSON, json))) {
+					.replace(LABEL_JSON, getNormalJSON(json)))) {
 			return updateObject(table, name, namespace, json);
 		}
 		return true;
@@ -153,7 +153,7 @@ public class Synchronizer {
 					.replace(LABEL_TABLE, table)
 					.replace(LABEL_NAME, name)
 					.replace(LABEL_NAMESPACE, namespace)
-					.replace(LABEL_JSON, json));		
+					.replace(LABEL_JSON, getNormalJSON(json)));		
 	}
 	
 	/**
@@ -169,9 +169,15 @@ public class Synchronizer {
 					.replace(LABEL_TABLE, table)
 					.replace(LABEL_NAME, name)
 					.replace(LABEL_NAMESPACE, namespace)
-					.replace(LABEL_JSON, json));		
+					.replace(LABEL_JSON, getNormalJSON(json)));		
 	}
 	
+	public String getNormalJSON(String json) {
+		return json.replaceAll("&&", "\\\\u0026\\\\u0026")  
+				.replaceAll(">", "\\\\u003e")
+				.replaceAll("\\'", "\\\\'")  // '
+				.replaceAll("\\\\n", "\\\\\\\\n");  // \n
+	}
 	
 	/**
 	 * @param dbName                          dbName
@@ -179,7 +185,7 @@ public class Synchronizer {
 	 * @return                                true or false
 	 * @throws Exception                      exception
 	 */
-	public  boolean execWithResult(String dbName, String sql) throws Exception {
+	public boolean execWithResult(String dbName, String sql) throws Exception {
 		if (dbName != null) {
 			conn.setCatalog(dbName);
 		}
@@ -211,9 +217,9 @@ public class Synchronizer {
 		}
 		
 		PreparedStatement pstmt = null;
+				
+		
 		try {
-//			pstmt = conn.prepareStatement(sql
-//						.replaceAll("\\\"", "\\\\\\\""));
 			pstmt = conn.prepareStatement(sql);
 			return pstmt.execute();
 		} catch (Exception ex) {
@@ -226,6 +232,7 @@ public class Synchronizer {
 			}
 		}
 	}
+	
 
 	public Connection getConn() {
 		return conn;
