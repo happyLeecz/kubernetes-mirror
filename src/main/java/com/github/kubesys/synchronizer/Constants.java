@@ -52,9 +52,9 @@ public final class Constants {
 	
 	public static final String SQL_DELETE            				= "delete";
 	
-	protected static final String JDBC     = "jdbc:mysql://kube-database.kube-system:3306?useUnicode=true&characterEncoding=UTF8&connectTimeout=2000&socketTimeout=6000&autoReconnect=true&&serverTimezone=Asia/Shanghai";
+//	protected static final String JDBC     = "jdbc:mysql://kube-database.kube-system:3306?useUnicode=true&characterEncoding=UTF8&connectTimeout=2000&socketTimeout=6000&autoReconnect=true&&serverTimezone=Asia/Shanghai";
 	
-//	protected static final String JDBC     = "jdbc:mysql://127.0.0.1:32306?useUnicode=true&characterEncoding=UTF8&connectTimeout=2000&socketTimeout=6000&autoReconnect=true&&serverTimezone=Asia/Shanghai";
+	protected static final String JDBC     = "jdbc:mysql://kube-database.kube-system:3306";
 	
 	protected static final String USER     = "root";
 	

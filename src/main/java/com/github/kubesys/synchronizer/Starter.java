@@ -3,12 +3,15 @@
  */
 package com.github.kubesys.synchronizer;
 
-import java.sql.DriverManager;
+import java.io.IOException;
+import java.sql.Connection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import com.alibaba.druid.pool.DruidDataSource;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.mysql.cj.jdbc.Driver;
 
@@ -32,7 +35,7 @@ public class Starter {
 	/**
 	 * targets
 	 */
-	public static final Set<String> synchTargets = new HashSet<>(); 
+	protected static final Set<String> synchTargets = new HashSet<>(); 
 	
 	/**
 	 * name
@@ -48,10 +51,10 @@ public class Starter {
 	public static void main(String[] args) throws Exception {
 		
 		KubernetesClient kubeClient = getKubeClient();
-		Synchronizer sqlClient = getSynchronizer();
+		Connection sqlClient = createDataSource().getConnection();
 		createSynchTargetsFromConfifMap(kubeClient.getResource(
 					Constants.KIND_CONFIGMAP, Constants.NS_KUBESYSTEM, NAME));
-		SynchFromKubeToMysql(kubeClient, sqlClient);
+		synchFromKubeToMysql(kubeClient, sqlClient);
 	}
 
 	
@@ -61,26 +64,14 @@ public class Starter {
 	 * 
 	 *****************************************************************************************/
 	
-	protected static void watchKubernetesCRDKinds(KubernetesClient kubeClient, Synchronizer sqlClient) throws Exception {
+	protected static void watchKubernetesCRDKinds(KubernetesClient kubeClient, Connection sqlClient) throws Exception {
 		kubeClient.watchResources(Constants.KIND_CUSTOMRESOURCEDEFINTION, 
 							KubernetesConstants.VALUE_ALL_NAMESPACES, 
 							new Listener(Constants.KIND_CUSTOMRESOURCEDEFINTION, kubeClient, sqlClient));
 	}
 
-	protected static void SynchFromKubeToMysql(KubernetesClient kubeClient, Synchronizer sqlClient) throws Exception {
-		
+	protected static void synchFromKubeToMysql(KubernetesClient kubeClient, Connection sqlClient) throws Exception {
 		for (String kind : synchTargets) {
-			String tableName = kubeClient.getConfig().getName(kind);
-			
-			try {
-				if (!sqlClient.hasTable(Constants.DB, tableName)) {
-					sqlClient.createTable(Constants.DB, tableName);
-				}
-				m_logger.info("create table " + tableName + " successfully.");
-			} catch (Exception e) {
-				m_logger.severe("fail to create table " + tableName + ":" + e);
-			}
-			
 			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
 										new Listener(kind, kubeClient, sqlClient));
 		}
@@ -115,21 +106,19 @@ public class Starter {
 								: new KubernetesClient(url, token);
 	}
 
-	private static Synchronizer getSynchronizer() throws Exception {
-		
-		String jdbc = System.getenv("JDBC") == null ? Constants.JDBC : System.getenv("JDBC");
-		String user = System.getenv("USER") == null ? Constants.USER : System.getenv("USER");
-		String pwd  = System.getenv("PWD") == null ? Constants.PWD : System.getenv("PWD");
-
-		Class.forName(Driver.class.getName());
-		Synchronizer sqlClient =  new Synchronizer(
-				DriverManager.getConnection(jdbc, user, pwd));
-		
-		if (!sqlClient.hasDatabase(Constants.DB)) {
-			sqlClient.createDatabase(Constants.DB);
-		}
-		
-		return sqlClient;
-	}
-
+	
+	private static DruidDataSource createDataSource() throws IOException {
+        Properties props = new Properties();
+        props.put("druid.driverClassName", Driver.class.getName());
+        props.put("druid.url", Constants.JDBC);
+        props.put("druid.username", Constants.USER);
+        props.put("druid.password", Constants.PWD);
+        props.put("druid.initialSize", 10);
+        props.put("druid.maxActive", 100);
+        props.put("druid.maxWait", 3000);
+        DruidDataSource dataSource = new DruidDataSource();
+        dataSource.configFromPropety(props);
+        return dataSource;
+    }
+	
 }

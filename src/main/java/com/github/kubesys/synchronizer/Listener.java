@@ -3,6 +3,7 @@
  */
 package com.github.kubesys.synchronizer;
 
+import java.sql.Connection;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,13 +35,13 @@ public class Listener extends KubernetesWatcher {
 	/**
 	 * client
 	 */
-	protected final Synchronizer sqlClient;
+	protected final Synchronizer synchronizer;
 
-	public Listener(String kind, KubernetesClient kubeClient, Synchronizer sqlClient) {
+	public Listener(String kind, KubernetesClient kubeClient, Connection sqlClient) {
 		super();
 		this.kind = kind;
 		this.kubeClient = kubeClient;
-		this.sqlClient = sqlClient;
+		this.synchronizer = new Synchronizer(sqlClient);
 	}
 
 
@@ -62,95 +63,70 @@ public class Listener extends KubernetesWatcher {
 			
 			String tableName = kubeClient.getConfig().getName(newKind);
 			try {
-				if (!sqlClient.hasTable(Constants.DB, tableName)) {
-					sqlClient.createTable(Constants.DB, tableName);
+				if (!synchronizer.hasTable(Constants.DB, tableName)) {
+					synchronizer.createTable(Constants.DB, tableName);
 				}
+				
 				m_logger.info("create table " + tableName + " successfully.");
 			} catch (Exception e) {
 				m_logger.severe("fail to create table " + tableName + ":" + e);
 			}
 			
 			kubeClient.watchResources(newKind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
-									new Listener(newKind, kubeClient, sqlClient));
+									new Listener(newKind, kubeClient, synchronizer.getConn()));
 		} 
 
 		
-		ObjectNode yaml = getJsonWithoutAnotation(json);
-		String itemName = getName(json);
-		String itemNS = getNamespace(json);
-
-		String sql = "INSERT INTO " + kubeClient.getConfig().getName(kind) + " VALUES ('" 
-							+ itemName + "', '"
-							+ itemNS + "', '"
-							+ yaml.toString() + "', " 
-							+ true + ")";
-		
-		if (!doSql(sql, itemName, itemNS, Constants.SQL_INSERT)) {
-			doModified(yaml);
+		String tableName = kubeClient.getConfig().getName(kind);
+		try {
+			if (!synchronizer.hasTable(Constants.DB, tableName)) {
+				synchronizer.createTable(Constants.DB, tableName);
+			}
+			synchronizer.insertObject(tableName, 
+					getName(json), getNamespace(json), getJsonWithoutAnotation(json));
+			m_logger.info("create table " + tableName + " successfully.");
+		} catch (Exception e) {
+			m_logger.severe("fail to insert object because of missing table " + tableName + ":" + e);
 		}
 
 	}
 
 	public void doModified(JsonNode json) {
 		
-		ObjectNode node = getJsonWithoutAnotation(json);
-
-		String itemName = getName(json);
-		String itemNS = getNamespace(json);
-		
-		String sql = "UPDATE " + kubeClient.getConfig().getName(kind) 
-										+ " SET data = '" + node  + "' WHERE"
-										+ " name = '" + itemName + "' and "
-										+ " namespace = '" + itemNS + "'";
-		
-		doSql(sql, itemName, itemNS, Constants.SQL_UPDATE);
+		try {
+			synchronizer.updateObject(kubeClient.getConfig().getName(kind), 
+					getName(json), getNamespace(json), getJsonWithoutAnotation(json));
+		} catch (Exception ex) {
+			
+		}
 
 	}
 
 	public void doDeleted(JsonNode json) {
-
-		String itemName = getName(json);
-		String itemNS = getNamespace(json);
 		
-		String sql = "DELETE FROM " + kubeClient.getConfig().getName(kind) 
-				+ " WHERE name = '" + itemName + "' and namespace = '" + itemNS + "'";
-		
-		doSql(sql, itemName, itemNS, Constants.SQL_DELETE);
-	}
-
-	/******************************************************
-	 * 
-	 * Utils
-	 * 
-	 ******************************************************/
-	protected boolean doSql(String sql, String name, String ns, String operation) {
-		
-		String rsql = sql.replaceAll("\\\"", "\\\\\\\"");
-
 		try {
-			sqlClient.exec(Constants.DB, rsql);
-			m_logger.info("\t" + operation + " object '<" + name + "," + ns 
-					+ ">' in table '" + kind.toLowerCase() + "' successfully.");
-			return true;
+			synchronizer.deleteObject(kubeClient.getConfig().getName(kind), 
+					getName(json), getNamespace(json), getJsonWithoutAnotation(json));
 		} catch (Exception ex) {
-			m_logger.severe(rsql + "," + ex);
-			return false;
+			
 		}
+
 	}
+
 
 	/**
 	 * @param json                            json
 	 * @return                                node
 	 */
 	@SuppressWarnings("deprecation")
-	protected ObjectNode getJsonWithoutAnotation(JsonNode json) {
+	protected String getJsonWithoutAnotation(JsonNode json) {
 		ObjectNode yaml = json.deepCopy();
 		ObjectNode meta = yaml.get(Constants.YAML_METADATA).deepCopy();
 		if (meta.has(Constants.YAML_METADATA_ANNOTATIONS)) {
 			meta.remove(Constants.YAML_METADATA_ANNOTATIONS);
 		}
 		yaml.put(Constants.YAML_METADATA, meta);
-		return yaml;
+		return yaml.toString();
 	}
 	
 	/**
@@ -175,12 +151,15 @@ public class Listener extends KubernetesWatcher {
 	@Override
 	public void doOnClose(KubernetesException exception) {
 		
-		m_logger.severe(exception.toString());
+		m_logger.severe("caused by" + exception);
 		if (Starter.synchTargets.contains(kind)) {
 			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
-								new Listener(kind, kubeClient, sqlClient));
+								new Listener(kind, kubeClient, synchronizer.conn));
 		}
 		m_logger.info("start synchronizer '" + kind + "'.");
 	}
+
+
+	
 
 }
