@@ -76,7 +76,7 @@ public class Listener extends KubernetesWatcher {
 									new Listener(newKind, kubeClient, synchronizer.getConn()));
 		} 
 
-		
+		// 
 		String tableName = kubeClient.getConfig().getName(kind);
 		try {
 			if (!synchronizer.hasTable(Constants.DB, tableName)) {
@@ -125,6 +125,12 @@ public class Listener extends KubernetesWatcher {
 		if (meta.has(Constants.YAML_METADATA_ANNOTATIONS)) {
 			meta.remove(Constants.YAML_METADATA_ANNOTATIONS);
 		}
+		
+		// > 1.18
+		if (meta.has(Constants.YAML_METADATA_MANAGEDFIELDS)) {
+			meta.remove(Constants.YAML_METADATA_MANAGEDFIELDS);
+		}
+		
 		yaml.put(Constants.YAML_METADATA, meta);
 		return yaml.toString();
 	}

@@ -212,10 +212,13 @@ public class Synchronizer {
 		
 		PreparedStatement pstmt = null;
 		try {
-			pstmt = conn.prepareStatement(sql.replaceAll("\\\"", "\\\\\\\"")); 
+//			pstmt = conn.prepareStatement(sql
+//						.replaceAll("\\\"", "\\\\\\\""));
+			pstmt = conn.prepareStatement(sql);
 			return pstmt.execute();
 		} catch (Exception ex) {
 			m_logger.severe("caused by " + sql + ":" + ex);
+			System.out.println(sql);
 			return false;
 		} finally {
 			if (pstmt != null) {

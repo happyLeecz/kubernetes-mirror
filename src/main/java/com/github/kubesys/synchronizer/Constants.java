@@ -45,6 +45,7 @@ public final class Constants {
 	
 	public static final String YAML_METADATA_ANNOTATIONS            = "annotations";
 	
+	public static final String YAML_METADATA_MANAGEDFIELDS          = "managedFields";
 	
 	public static final String SQL_INSERT                           = "insert";
 	
