@@ -173,10 +173,12 @@ public class Synchronizer {
 	}
 	
 	public String getNormalJSON(String json) {
-		return json.replaceAll("&&", "\\\\u0026\\\\u0026")  
+		return json.replaceAll("&&", "\\\\u0026\\\\u0026")
 				.replaceAll(">", "\\\\u003e")
-				.replaceAll("\\'", "\\\\'")  // '
-				.replaceAll("\\\\n", "\\\\\\\\n");  // \n
+				.replaceAll("\\'", "\\\\'")
+//				.replaceAll("\\'", "\\\\\\\\'")
+				.replaceAll("\\\\n", "\\\\\\\\\\n")
+				.replaceAll("\\\\\"", "\\\\\\\\\\\\\"");
 	}
 	
 	/**
@@ -224,7 +226,7 @@ public class Synchronizer {
 			return pstmt.execute();
 		} catch (Exception ex) {
 			m_logger.severe("caused by " + sql + ":" + ex);
-			System.out.println(sql);
+			System.out.println("bug:" + sql);
 			return false;
 		} finally {
 			if (pstmt != null) {

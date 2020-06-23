@@ -97,7 +97,7 @@ public class Starter {
 	 * 
 	 *****************************************************************************************/
 
-	private static KubernetesClient getKubeClient() throws Exception {
+	public static KubernetesClient getKubeClient() throws Exception {
 		String url    = System.getenv("URL");
 		String token  = System.getenv("TOKEN");
 		
