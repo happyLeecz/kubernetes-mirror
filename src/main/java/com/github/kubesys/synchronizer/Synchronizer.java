@@ -86,12 +86,30 @@ public class Synchronizer {
 	}
 	
 	public String getNormalJSON(String json) {
-		return json.replaceAll("&&", "\\\\u0026\\\\u0026")
+		String replaceAll = json.replaceAll("&&", "\\\\u0026\\\\u0026")
 				.replaceAll(">", "\\\\u003e")
 				.replaceAll("\\'", "\\\\'")
 //				.replaceAll("\\'", "\\\\\\\\'")
 				.replaceAll("\\\\n", "\\\\\\\\\\n")
 				.replaceAll("\\\\\"", "\\\\\\\\\\\\\"");
+		
+		// plase see loki-loki-stack-test
+		while (true) {
+			if (replaceAll.contains("\\\\\\\\\\")) {
+				replaceAll = replaceAll.replace("\\\\\\\\\\", "\\\\\\");
+			} else {
+				break;
+			}
+		}
+		
+//		while(true) {
+//			if (replaceAll.contains("\\'")) {
+//				replaceAll = replaceAll.replace("\\'", "'");
+//			} else {
+//				break;
+//			}
+//		}
+		return replaceAll;
 	}
 	
 	
