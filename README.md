@@ -2,7 +2,7 @@
 
 Synchronize Kubernetes resources to mariadb to support query and recovery.
 
-This project is based on [mysql-connector-java](https://github.com/mysql/mysql-connector-j).
+This project is based on [mysql-connector-java](https://github.com/mysql/mysql-connector-j), [druid](https://github.com/alibaba/druid).
 
 ## Installation
 
@@ -22,6 +22,9 @@ docker build docker/ -t registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-sync
 
 - Prototype
   - 0.1: using mysql-connector-java
-  - 0.2: using mybaits
-  - 0.3: using /etc/kubernetes/admin.conf
+  - 0.2: using druid
+  - 0.3: support JSON spec
+- Development
+  - 1.1: support spring-based query
+  - 1.2: support websocket
 
