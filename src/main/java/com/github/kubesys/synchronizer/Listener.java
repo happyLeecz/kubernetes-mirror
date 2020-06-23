@@ -31,16 +31,19 @@ public class Listener extends KubernetesWatcher {
 	 * client
 	 */
 	protected final KubernetesClient kubeClient;
+	
+	protected final MysqlClient sqlClient;
 
 	/**
 	 * client
 	 */
 	protected final Synchronizer synchronizer;
 
-	public Listener(String kind, KubernetesClient kubeClient, Connection sqlClient) {
+	public Listener(String kind, KubernetesClient kubeClient, MysqlClient sqlClient) {
 		super();
 		this.kind = kind;
 		this.kubeClient = kubeClient;
+		this.sqlClient = sqlClient;
 		this.synchronizer = new Synchronizer(sqlClient);
 	}
 
@@ -63,8 +66,8 @@ public class Listener extends KubernetesWatcher {
 			
 			String tableName = kubeClient.getConfig().getName(newKind);
 			try {
-				if (!synchronizer.hasTable(Constants.DB, tableName)) {
-					synchronizer.createTable(Constants.DB, tableName);
+				if (!sqlClient.hasTable(Constants.DB, tableName)) {
+					sqlClient.createTable(Constants.DB, tableName);
 				}
 				
 				m_logger.info("create table " + tableName + " successfully.");
@@ -73,14 +76,14 @@ public class Listener extends KubernetesWatcher {
 			}
 			
 			kubeClient.watchResources(newKind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
-									new Listener(newKind, kubeClient, synchronizer.getConn()));
+									new Listener(newKind, kubeClient, sqlClient));
 		} 
 
 		// 
 		String tableName = kubeClient.getConfig().getName(kind);
 		try {
-			if (!synchronizer.hasTable(Constants.DB, tableName)) {
-				synchronizer.createTable(Constants.DB, tableName);
+			if (!sqlClient.hasTable(Constants.DB, tableName)) {
+				sqlClient.createTable(Constants.DB, tableName);
 			}
 			synchronizer.insertObject(tableName, 
 					getName(json), getNamespace(json), getJsonWithoutAnotation(json));
@@ -165,7 +168,7 @@ public class Listener extends KubernetesWatcher {
 		m_logger.severe("caused by" + exception);
 		if (Starter.synchTargets.contains(kind)) {
 			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
-								new Listener(kind, kubeClient, synchronizer.conn));
+								new Listener(kind, kubeClient, sqlClient));
 		}
 		m_logger.info("start synchronizer '" + kind + "'.");
 	}
