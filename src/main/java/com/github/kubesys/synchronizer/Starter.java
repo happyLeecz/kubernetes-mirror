@@ -3,7 +3,7 @@
  */
 package com.github.kubesys.synchronizer;
 
-import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Properties;
@@ -50,10 +50,25 @@ public class Starter {
 	public static void main(String[] args) throws Exception {
 		
 		KubernetesClient kubeClient = getKubeClient();
-		Connection sqlClient = createDataSource().getConnection();
+		MysqlClient sqlClient = getSqlClient();
 		createSynchTargetsFromConfifMap(kubeClient.getResource(
 					Constants.KIND_CONFIGMAP, Constants.NS_KUBESYSTEM, NAME));
 		synchFromKubeToMysql(kubeClient, sqlClient);
+	}
+
+
+	/**
+	 * @return
+	 * @throws SQLException
+	 * @throws Exception
+	 */
+	protected static MysqlClient getSqlClient() throws SQLException, Exception {
+		MysqlClient sqlClient = new MysqlClient(createDataSource().getConnection());
+		if (sqlClient.hasDatabase(Constants.DB)) {
+			sqlClient.dropDatabase(Constants.DB);
+			sqlClient.createDatabase(Constants.DB);
+		}
+		return sqlClient;
 	}
 
 	
@@ -63,13 +78,13 @@ public class Starter {
 	 * 
 	 *****************************************************************************************/
 	
-	protected static void watchKubernetesCRDKinds(KubernetesClient kubeClient, Connection sqlClient) throws Exception {
+	protected static void watchKubernetesCRDKinds(KubernetesClient kubeClient, MysqlClient sqlClient) throws Exception {
 		kubeClient.watchResources(Constants.KIND_CUSTOMRESOURCEDEFINTION, 
 							KubernetesConstants.VALUE_ALL_NAMESPACES, 
 							new Listener(Constants.KIND_CUSTOMRESOURCEDEFINTION, kubeClient, sqlClient));
 	}
 
-	protected static void synchFromKubeToMysql(KubernetesClient kubeClient, Connection sqlClient) throws Exception {
+	protected static void synchFromKubeToMysql(KubernetesClient kubeClient, MysqlClient sqlClient) throws Exception {
 		for (String kind : synchTargets) {
 			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
 										new Listener(kind, kubeClient, sqlClient));
