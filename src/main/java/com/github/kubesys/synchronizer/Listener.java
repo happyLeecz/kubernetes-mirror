@@ -3,7 +3,6 @@
  */
 package com.github.kubesys.synchronizer;
 
-import java.sql.Connection;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;

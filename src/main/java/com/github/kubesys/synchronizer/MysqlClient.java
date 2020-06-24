@@ -60,7 +60,7 @@ public class MysqlClient {
 	 * @throws Exception          exception
 	 */
 	public synchronized boolean hasDatabase(String name) throws Exception {
-		return execWithResult(null, CHECK_DATABASE.replace(LABEL_DATABASE, name));
+		return execWithResultCheck(null, CHECK_DATABASE.replace(LABEL_DATABASE, name));
 	}
 	
 	/**
@@ -86,7 +86,7 @@ public class MysqlClient {
 	 * @throws Exception mysql exception
 	 */
 	public synchronized boolean hasTable(String dbName, String tableName) throws Exception {
-		return execWithResult(dbName, CHECK_TABLE.replace(LABEL_DATABASE, dbName)
+		return execWithResultCheck(dbName, CHECK_TABLE.replace(LABEL_DATABASE, dbName)
 											.replace(LABEL_TABLE, tableName));
 	}
 
@@ -114,7 +114,7 @@ public class MysqlClient {
 	 * @return                                true or false
 	 * @throws Exception                      exception
 	 */
-	public boolean execWithResult(String dbName, String sql) throws Exception {
+	public boolean execWithResultCheck(String dbName, String sql) throws Exception {
 		if (dbName != null) {
 			conn.setCatalog(dbName);
 		}
@@ -126,6 +126,30 @@ public class MysqlClient {
 			return rs.next();
 		} catch (Exception ex) {
 			return false;
+		} finally {
+			if (pstmt != null) {
+				pstmt.close();
+			}
+		}
+	}
+	
+	/**
+	 * @param dbName                          dbName
+	 * @param sql                             sql
+	 * @return                                true or false
+	 * @throws Exception                      exception
+	 */
+	public ResultSet execWithResult(String dbName, String sql) throws Exception {
+		if (dbName != null) {
+			conn.setCatalog(dbName);
+		}
+		
+		PreparedStatement pstmt = null;
+		try {
+			pstmt = conn.prepareStatement(sql);
+			return pstmt.executeQuery();
+		} catch (Exception ex) {
+			return null;
 		} finally {
 			if (pstmt != null) {
 				pstmt.close();

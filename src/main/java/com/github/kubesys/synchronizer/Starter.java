@@ -62,7 +62,7 @@ public class Starter {
 	 * @throws SQLException
 	 * @throws Exception
 	 */
-	protected static MysqlClient getSqlClient() throws SQLException, Exception {
+	public static MysqlClient getSqlClient() throws SQLException, Exception {
 		MysqlClient sqlClient = new MysqlClient(createDataSource().getConnection());
 		if (sqlClient.hasDatabase(Constants.DB)) {
 			sqlClient.dropDatabase(Constants.DB);
@@ -84,14 +84,14 @@ public class Starter {
 							new Listener(Constants.KIND_CUSTOMRESOURCEDEFINTION, kubeClient, sqlClient));
 	}
 
-	protected static void synchFromKubeToMysql(KubernetesClient kubeClient, MysqlClient sqlClient) throws Exception {
+	public static void synchFromKubeToMysql(KubernetesClient kubeClient, MysqlClient sqlClient) throws Exception {
 		for (String kind : synchTargets) {
 			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
 										new Listener(kind, kubeClient, sqlClient));
 		}
 	}
 
-	protected static void createSynchTargetsFromConfifMap(JsonNode node) throws Exception {
+	public static void createSynchTargetsFromConfifMap(JsonNode node) throws Exception {
 		
 		try {
 			Iterator<JsonNode> elements = node.get(Constants.YAML_DATA).elements();
