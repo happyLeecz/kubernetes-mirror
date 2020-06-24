@@ -54,7 +54,7 @@ spec:
           effect: NoSchedule
       containers:
       - name: "kubernetes-synchronizer"
-        image: "registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-synchronizer:v0.1-amd64"
+        image: "registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-synchronizer:v0.3-amd64"
         imagePullPolicy: "IfNotPresent"
         command: 
         - "java"
@@ -98,7 +98,7 @@ spec:
           effect: NoSchedule
       containers:
       - name: "mariadb"
-        image: "mariadb:10.5.2"
+        image: "mariadb:10.5.3"
         imagePullPolicy: "IfNotPresent"
         ports:
         - containerPort: 3306
@@ -109,7 +109,7 @@ spec:
         - name: "mysqldata"
           mountPath: "/var/lib/mysql"
       - name: "adminer"
-        image: "adminer:4.7.6-standalone"
+        image: "adminer:4.7.7-standalone"
         imagePullPolicy: "IfNotPresent"
         ports: 
         - containerPort: 8080
