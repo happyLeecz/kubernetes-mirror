@@ -2,10 +2,13 @@
 
 Synchronize Kubernetes resources to mariadb to support query and recovery.
 
-This project is based on [mysql-connector-java](https://github.com/mysql/mysql-connector-j), [druid](https://github.com/alibaba/druid).
+This project is based on :
+
+- [mysql-connector-java](https://github.com/mysql/mysql-connector-j): MySQL Connector/J
+- [druid](https://github.com/alibaba/druid): Pooled MySQL Connector/J
+- [kubernetes-httpfrk](https://github.com/kubesys/kubernetes-httpfrk): extends Spring framework to support Kubernetes' lifecycle management
 
 ## Installation
-
 
 ```
 https://raw.githubusercontent.com/kubesys/kubernetes-synchronizer/master/kubernetes-synchronizer.yaml
