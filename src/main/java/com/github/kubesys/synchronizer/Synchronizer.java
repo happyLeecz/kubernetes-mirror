@@ -47,7 +47,7 @@ public class Synchronizer {
 					.replace(MysqlClient.LABEL_TABLE, table)
 					.replace(MysqlClient.LABEL_NAME, name)
 					.replace(MysqlClient.LABEL_NAMESPACE, namespace)
-					.replace(MysqlClient.LABEL_JSON, getNormalJSON(json)))) {
+					.replace(MysqlClient.LABEL_JSON, json))) {
 			return updateObject(table, name, namespace, json);
 		}
 		return true;
@@ -66,7 +66,7 @@ public class Synchronizer {
 					.replace(MysqlClient.LABEL_TABLE, table)
 					.replace(MysqlClient.LABEL_NAME, name)
 					.replace(MysqlClient.LABEL_NAMESPACE, namespace)
-					.replace(MysqlClient.LABEL_JSON, getNormalJSON(json)));		
+					.replace(MysqlClient.LABEL_JSON, json));		
 	}
 	
 	/**
@@ -82,36 +82,8 @@ public class Synchronizer {
 					.replace(MysqlClient.LABEL_TABLE, table)
 					.replace(MysqlClient.LABEL_NAME, name)
 					.replace(MysqlClient.LABEL_NAMESPACE, namespace)
-					.replace(MysqlClient.LABEL_JSON, getNormalJSON(json)));		
+					.replace(MysqlClient.LABEL_JSON, json));		
 	}
-	
-	public String getNormalJSON(String json) {
-		String replaceAll = json.replaceAll("&&", "\\\\u0026\\\\u0026")
-				.replaceAll(">", "\\\\u003e")
-				.replaceAll("\\'", "\\\\'")
-//				.replaceAll("\\'", "\\\\\\\\'")
-				.replaceAll("\\\\n", "\\\\\\\\\\n")
-				.replaceAll("\\\\\"", "\\\\\\\\\\\\\"");
-		
-		// plase see loki-loki-stack-test
-		while (true) {
-			if (replaceAll.contains("\\\\\\\\\\")) {
-				replaceAll = replaceAll.replace("\\\\\\\\\\", "\\\\\\");
-			} else {
-				break;
-			}
-		}
-		
-//		while(true) {
-//			if (replaceAll.contains("\\'")) {
-//				replaceAll = replaceAll.replace("\\'", "'");
-//			} else {
-//				break;
-//			}
-//		}
-		return replaceAll;
-	}
-	
 	
 
 	public Connection getConn() {

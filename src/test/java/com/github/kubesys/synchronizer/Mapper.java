@@ -10,7 +10,6 @@ import java.sql.Statement;
 import java.util.Properties;
 
 import com.alibaba.druid.pool.DruidDataSource;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mysql.cj.jdbc.Driver;
 
 /**

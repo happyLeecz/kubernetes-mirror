@@ -106,7 +106,6 @@ public class Listener extends KubernetesWatcher {
 	 * @param json                            json
 	 * @return                                node
 	 */
-	@SuppressWarnings("deprecation")
 	protected String getJsonWithoutAnotation(JsonNode json) {
 		ObjectNode yaml = json.deepCopy();
 		ObjectNode meta = yaml.get(Constants.YAML_METADATA).deepCopy();
@@ -119,13 +118,33 @@ public class Listener extends KubernetesWatcher {
 			meta.remove(Constants.YAML_METADATA_MANAGEDFIELDS);
 		}
 		
-		// if it is Deploymnet
+		yaml.remove(Constants.YAML_METADATA);
+		yaml.set(Constants.YAML_METADATA, meta);
 		
-		if (json.get("kind").asText().equals("Deployment")) {
-			yaml.remove("status");
+		String value = yaml.toPrettyString();
+		
+		value = toMysqlJSON(value, "&", "\\u0026");
+		value = toMysqlJSON(value, ">", "\\u003e");
+		value = toMysqlJSON(value, "<", "\\u003c");
+		value = toMysqlJSON(value, " \'", " \\'");
+		value = toMysqlJSON(value, "\' ", "\\' ");
+		value = toMysqlJSON(value, " \\\"", " \\\\\"");
+		value = toMysqlJSON(value, "\\\" ", "\\\\\" ");
+		value = toMysqlJSON(value, "\\n", "\\\\n");
+		
+		return value;
+	}
+
+
+	protected String toMysqlJSON(String value, String src, String dst) {
+		while(true) {
+			if (value.contains(src)) {
+				value = value.replace(src, dst);
+			} else {
+				break;
+			}
 		}
-		yaml.put(Constants.YAML_METADATA, meta);
-		return yaml.toString();
+		return value;
 	}
 	
 	/**

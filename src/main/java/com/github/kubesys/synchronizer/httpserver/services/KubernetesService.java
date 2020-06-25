@@ -97,12 +97,6 @@ public class KubernetesService extends HttpBodyHandler {
 		String kindName = kubeClient.getConfig().getName(kind);
 		sqlBase.append(SELECT.replace("#TABLE#", kindName));
 	
-		String countSql = sqlBase.toString().replace("#TARGET#", TARGET_COUNT);
-		ResultSet rsc = sqlClient.execWithResult(Constants.DB, countSql);
-		rsc.next();
-		int total = rsc.getInt("count");
-		rsc.close();
-		
 		int l = (limit <= 0) ? 10 : limit;
 		int p = (page <= 1) ? 1 : page;
 		if (labels != null && !labels.isEmpty()) {
@@ -112,21 +106,26 @@ public class KubernetesService extends HttpBodyHandler {
 						.replace("#ITEM#", key.replace("#", "."))
 						.replace("#VALUE#", labels.get(key)));
 			}
-			sqlBase.replace(sqlBase.length() - 4, sqlBase.length(), 
+			
+			sqlBase.delete(sqlBase.length() - 4, sqlBase.length());
+		} 
+		
+		String countSql = sqlBase.toString().replace("#TARGET#", TARGET_COUNT);
+		ResultSet rsc = sqlClient.execWithResult(Constants.DB, countSql);
+		rsc.next();
+		int total = rsc.getInt("count");
+		rsc.close();
+		
+		//
+		sqlBase.append( 
 					LIMIT.replace("#FROM#", String.valueOf((p-1)*l))
 							.replace("#TO#", String.valueOf(p*l)));
-		} else {
-			sqlBase.append( 
-					LIMIT.replace("#FROM#", String.valueOf((p-1)*l))
-							.replace("#TO#", String.valueOf(p*l)));
-		}
 		
 		String dataSql = sqlBase.toString().replace("#TARGET#", TARGET_DATA);
 		ResultSet rsd = sqlClient.execWithResult(Constants.DB, dataSql);
 		ArrayNode items = new ObjectMapper().createArrayNode();
 		while(rsd.next()) {
-			items.add(new ObjectMapper().writeValueAsString(
-					rsd.getObject("data")));
+			items.add(new ObjectMapper().readTree(rsd.getString("data")));
 		}
 		rsd.close();
 		

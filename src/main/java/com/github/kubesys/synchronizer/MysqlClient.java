@@ -171,7 +171,7 @@ public class MysqlClient {
 			return pstmt.execute();
 		} catch (Exception ex) {
 			m_logger.severe("caused by " + sql + ":" + ex);
-			System.out.println("bug:" + sql);
+			System.err.println("bug:" + sql);
 			return false;
 		} finally {
 			if (pstmt != null) {
