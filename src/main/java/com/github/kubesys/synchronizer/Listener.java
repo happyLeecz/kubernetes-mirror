@@ -179,6 +179,4 @@ public class Listener extends KubernetesWatcher {
 	}
 
 
-	
-
 }

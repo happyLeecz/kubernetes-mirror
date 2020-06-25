@@ -134,6 +134,7 @@ public class Starter {
         props.put("druid.maxActive", 100);
         props.put("druid.maxWait", 3000);
         props.put("druid.keepAlive", true);
+        props.put("druid.validationQuery", MysqlClient.CHECK_DATABASE.replace("#DATBASE#", "kube"));
         DruidDataSource dataSource = new DruidDataSource();
         dataSource.configFromPropety(props);
         return dataSource;
