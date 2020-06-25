@@ -1,0 +1,14 @@
+# General configuration
+server:
+  port: 32000
+  servlet:
+    context-path: /kube
+
+spring:
+   mvc:    async:      request-timeout: -1
+   datasource:
+     url: jdbc:mysql://127.0.0.1:3306/mypoj
+     username: root
+     password: onceas
+     driverClassName: com.mysql.cj.jdbc.Driver
+    

@@ -22,11 +22,6 @@ public class Listener extends KubernetesWatcher {
 	public static final Logger m_logger = Logger.getLogger(Listener.class.getName());
 	
 	/**
-	 * kind
-	 */
-	protected final String kind;
-
-	/**
 	 * client
 	 */
 	protected final KubernetesClient kubeClient;
@@ -37,13 +32,21 @@ public class Listener extends KubernetesWatcher {
 	 * client
 	 */
 	protected final Synchronizer synchronizer;
-
+	
+	/**
+	 * kind
+	 */
+	protected final String kind;
+	
+	protected final String tableName;
+	
 	public Listener(String kind, KubernetesClient kubeClient, MysqlClient sqlClient) {
 		super();
 		this.kind = kind;
 		this.kubeClient = kubeClient;
 		this.sqlClient = sqlClient;
 		this.synchronizer = new Synchronizer(sqlClient);
+		this.tableName = kubeClient.getConfig().getName(kind);
 	}
 
 
@@ -68,7 +71,6 @@ public class Listener extends KubernetesWatcher {
 		} 
 
 		// 
-		String tableName = kubeClient.getConfig().getName(kind);
 		try {
 			synchronizer.insertObject(tableName, 
 					getName(json), getNamespace(json), getJsonWithoutAnotation(json));
@@ -126,25 +128,24 @@ public class Listener extends KubernetesWatcher {
 		value = toMysqlJSON(value, "&", "\\u0026");
 		value = toMysqlJSON(value, ">", "\\u003e");
 		value = toMysqlJSON(value, "<", "\\u003c");
-		value = toMysqlJSON(value, " \'", " \\'");
-		value = toMysqlJSON(value, "\' ", "\\' ");
-		value = toMysqlJSON(value, " \\\"", " \\\\\"");
-		value = toMysqlJSON(value, "\\\" ", "\\\\\" ");
+		value = toMysqlJSON(value, "\'", " \\'");
+		value = toMysqlJSON(value, "\\\"", "\\\\\"");
 		value = toMysqlJSON(value, "\\n", "\\\\n");
 		
 		return value;
 	}
 
 
-	protected String toMysqlJSON(String value, String src, String dst) {
-		while(true) {
-			if (value.contains(src)) {
-				value = value.replace(src, dst);
-			} else {
-				break;
-			}
+	public static String toMysqlJSON(String value, String src, String dst) {
+		StringBuffer sb = new StringBuffer();
+		int i = value.indexOf(src);
+		if (i == -1) {
+			sb.append(value);
+		} else {
+			sb.append(value.substring(0, i)).append(dst).append(
+					toMysqlJSON(value.substring(i + src.length()), src, dst));
 		}
-		return value;
+		return sb.toString();
 	}
 	
 	/**
