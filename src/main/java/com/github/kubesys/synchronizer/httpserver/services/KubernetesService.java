@@ -101,6 +101,7 @@ public class KubernetesService extends HttpBodyHandler {
 		ResultSet rsc = sqlClient.execWithResult(Constants.DB, countSql);
 		rsc.next();
 		int total = rsc.getInt("count");
+		rsc.close();
 		
 		int l = (limit <= 0) ? 10 : limit;
 		int p = (page <= 1) ? 1 : page;
@@ -124,8 +125,10 @@ public class KubernetesService extends HttpBodyHandler {
 		ResultSet rsd = sqlClient.execWithResult(Constants.DB, dataSql);
 		ArrayNode items = new ObjectMapper().createArrayNode();
 		while(rsd.next()) {
-			items.add(rsd.getString("data"));
+			items.add(new ObjectMapper().writeValueAsString(
+					rsd.getObject("data")));
 		}
+		rsd.close();
 		
 		ObjectNode node = new ObjectMapper().createObjectNode();
 		node.put("kind", kind + "List");

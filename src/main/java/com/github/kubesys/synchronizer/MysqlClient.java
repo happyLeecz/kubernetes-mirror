@@ -144,17 +144,11 @@ public class MysqlClient {
 			conn.setCatalog(dbName);
 		}
 		
-		PreparedStatement pstmt = null;
 		try {
-			pstmt = conn.prepareStatement(sql);
-			return pstmt.executeQuery();
+			return conn.prepareStatement(sql).executeQuery();
 		} catch (Exception ex) {
 			return null;
-		} finally {
-			if (pstmt != null) {
-				pstmt.close();
-			}
-		}
+		} 
 	}
 	
 	/**

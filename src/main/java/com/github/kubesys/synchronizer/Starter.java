@@ -64,10 +64,11 @@ public class Starter {
 	 */
 	public static MysqlClient getSqlClient() throws SQLException, Exception {
 		MysqlClient sqlClient = new MysqlClient(createDataSource().getConnection());
+
 		if (sqlClient.hasDatabase(Constants.DB)) {
 			sqlClient.dropDatabase(Constants.DB);
-			sqlClient.createDatabase(Constants.DB);
 		}
+		sqlClient.createDatabase(Constants.DB);
 		return sqlClient;
 	}
 
@@ -86,6 +87,8 @@ public class Starter {
 
 	public static void synchFromKubeToMysql(KubernetesClient kubeClient, MysqlClient sqlClient) throws Exception {
 		for (String kind : synchTargets) {
+			String tableName = kubeClient.getConfig().getName(kind);
+			sqlClient.createTable(Constants.DB, tableName);
 			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
 										new Listener(kind, kubeClient, sqlClient));
 		}

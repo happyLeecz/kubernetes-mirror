@@ -63,17 +63,6 @@ public class Listener extends KubernetesWatcher {
 				return;
 			}
 			
-			String tableName = kubeClient.getConfig().getName(newKind);
-			try {
-				if (!sqlClient.hasTable(Constants.DB, tableName)) {
-					sqlClient.createTable(Constants.DB, tableName);
-				}
-				
-				m_logger.info("create table " + tableName + " successfully.");
-			} catch (Exception e) {
-				m_logger.severe("fail to create table " + tableName + ":" + e);
-			}
-			
 			kubeClient.watchResources(newKind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
 									new Listener(newKind, kubeClient, sqlClient));
 		} 
@@ -81,12 +70,9 @@ public class Listener extends KubernetesWatcher {
 		// 
 		String tableName = kubeClient.getConfig().getName(kind);
 		try {
-			if (!sqlClient.hasTable(Constants.DB, tableName)) {
-				sqlClient.createTable(Constants.DB, tableName);
-			}
 			synchronizer.insertObject(tableName, 
 					getName(json), getNamespace(json), getJsonWithoutAnotation(json));
-			m_logger.info("create table " + tableName + " successfully.");
+			m_logger.info("insert object  " + json + " successfully.");
 		} catch (Exception e) {
 			m_logger.severe("fail to insert object because of missing table " + tableName + ":" + e);
 		}
