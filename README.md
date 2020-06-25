@@ -25,15 +25,27 @@ docker build docker/ -t registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-sync
 
 ## Usage
 
-access 'http://IP:32000/kube/docs' for more information.
+access 'http://IP:32080'
+
+- server: kube-database.kube-system:3306
+- username: root
+- password: onceas
+
+then you can go to database 'kube', and find the synchronous data. 
+If you want to synchronous more data, please edit ConfigMap named kubernetes-synchronizer in namesapce 'kube-system'
+
+```
+kubectl edt cm kubernetes-synchronizer -n kube-system
+```
+
+If you want to customized database dns, username and password, please modify [kubernetes-synchronizer.yaml](https://raw.githubusercontent.com/kubesys/kubernetes-synchronizer/master/kubernetes-synchronizer.yaml)
 
 ## Roadmap
 
 - Prototype
   - 0.1: using mysql-connector-java
   - 0.2: using druid
-  - 0.3: support JSON spec
+  - 0.3: support keep alive
+  - 0.4: provide http-based query
 - Development
-  - 1.1: support spring-based query
-  - 1.2: support websocket
 
