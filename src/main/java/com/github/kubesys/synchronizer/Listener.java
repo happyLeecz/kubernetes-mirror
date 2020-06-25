@@ -87,7 +87,7 @@ public class Listener extends KubernetesWatcher {
 			synchronizer.updateObject(kubeClient.getConfig().getName(kind), 
 					getName(json), getNamespace(json), getJsonWithoutAnotation(json));
 		} catch (Exception ex) {
-			
+			ex.printStackTrace();
 		}
 
 	}
@@ -98,7 +98,7 @@ public class Listener extends KubernetesWatcher {
 			synchronizer.deleteObject(kubeClient.getConfig().getName(kind), 
 					getName(json), getNamespace(json), getJsonWithoutAnotation(json));
 		} catch (Exception ex) {
-			
+			ex.printStackTrace();
 		}
 
 	}
