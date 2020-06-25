@@ -55,7 +55,7 @@ public final class Constants {
 	
 //	protected static final String JDBC     = "jdbc:mysql://kube-database.kube-system:3306?useUnicode=true&characterEncoding=UTF8&connectTimeout=2000&socketTimeout=6000&autoReconnect=true&&serverTimezone=Asia/Shanghai";
 	
-	public static final String JDBC     = "jdbc:mysql://kube-database.kube-system:3306";
+	public static final String JDBC     = "jdbc:mysql://kube-database.kube-system:3306&autoReconnect=true";
 	
 	public static final String USER     = "root";
 	

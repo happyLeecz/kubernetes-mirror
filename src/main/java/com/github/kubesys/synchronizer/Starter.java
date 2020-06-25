@@ -16,8 +16,6 @@ import com.mysql.cj.jdbc.Driver;
 
 import io.github.kubesys.KubernetesClient;
 import io.github.kubesys.KubernetesConstants;
-import io.github.kubesys.KubernetesException;
-import io.github.kubesys.KubernetesWatcher;
 
 /**
  * @author wuheng@otcaix.iscas.ac.cn
@@ -52,34 +50,12 @@ public class Starter {
 	public static void main(String[] args) throws Exception {
 		
 		KubernetesClient kubeClient = getKubeClient();
-		kubeClient.watchResources("Node", "", new KubernetesWatcher() {
-			
-			@Override
-			public void doOnClose(KubernetesException exception) {
-				
-			}
-			
-			@Override
-			public void doModified(JsonNode node) {
-				System.out.println(node);
-			}
-			
-			@Override
-			public void doDeleted(JsonNode node) {
-				// TODO Auto-generated method stub
-				
-			}
-			
-			@Override
-			public void doAdded(JsonNode node) {
-				// TODO Auto-generated method stub
-				System.err.println(node);
-			}
-		});
-//		MysqlClient sqlClient = getSqlClient();
-//		createSynchTargetsFromConfifMap(kubeClient.getResource(
-//					Constants.KIND_CONFIGMAP, Constants.NS_KUBESYSTEM, NAME));
-//		synchFromKubeToMysql(kubeClient, sqlClient);
+		MysqlClient sqlClient = getSqlClient();
+		createSynchTargetsFromConfifMap(kubeClient.getResource(
+					Constants.KIND_CONFIGMAP, Constants.NS_KUBESYSTEM, NAME));
+		synchFromKubeToMysql(kubeClient, sqlClient);
+		Thread keepAlive = new Thread(new KeepAlive(kubeClient));
+		keepAlive.start();
 	}
 
 
