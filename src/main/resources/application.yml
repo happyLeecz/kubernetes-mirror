@@ -1,6 +1,6 @@
 # General configuration
 server:
-  port: 32000
+  port: 8080
   servlet:
     context-path: /kube
 
