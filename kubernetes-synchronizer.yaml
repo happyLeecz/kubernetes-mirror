@@ -54,17 +54,19 @@ spec:
           effect: NoSchedule
       containers:
       - name: "kubernetes-synchronizer"
-        image: "registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-synchronizer:v0.3-amd64"
+        image: "registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-synchronizer:v0.4-amd64"
         imagePullPolicy: "IfNotPresent"
+        ports: 
+        - containerPort: 8080
         command: 
         - "java"
         - "-jar"
         - "kubernetes-synchronizer.jar"
         env:
         - name: URL
-          value: https://192.168.42.206:6443
+          value: https://172.17.104.190:6443
         - name: TOKEN
-          value: eyJhbGciOiJSUzI1NiIsImtpZCI6InJoRzEwa2xVWjU4TGxHN1YzR085TUdUYmM1U0RnTUtfSnBmT3FyeE12a0UifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJrdWJlcm5ldGVzLWNsaWVudC10b2tlbi1wdHA2ZiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50Lm5hbWUiOiJrdWJlcm5ldGVzLWNsaWVudCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjQ1MmNjODMxLWNkZTEtNDA2OC05MDgxLWE0ZDU4ODRiNWU0OSIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlLXN5c3RlbTprdWJlcm5ldGVzLWNsaWVudCJ9.dvoNqw7Eq2mhGozvLdT1i1N-NhIMI9d0uuMlU2FEUoY_i8vb4YaePutXyPRnywadsvldOK68nwKABZ6iqOGfygT7PC4sye8pqxOHF_Hu5w6qAnP3MZHqIxlKPkxi5l8J1-Wle6nznnQPNPZsxY8wEGplqAcLXfvs4ti-fThA6ZMz7v6yBjuPpdGe3ron_zWyV0AEEX7pkI35lGsmp1-Fh_S9Vax8Q9l-gbxF95VfJ9BUvZb_Po9O8E--O7FeapeDwzELNLJVb0J9ZTjXIZ-TV6CubG5XAM_5UrCNkL4hUntcrhE1ShoJnuvvMP0jnZr9w0Y3OM4zzUYB4pIHpRnG6g
+          value: eyJhbGciOiJSUzI1NiIsImtpZCI6IjBUUGxHRE5YdG5FRkswS3NVNHhEbHctTDFwbXZOY09LQ3ZydHBUWTVfR00ifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlLXN5c3RlbSIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJrdWJlcm5ldGVzLWNsaWVudC10b2tlbi1nNWIyYyIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50Lm5hbWUiOiJrdWJlcm5ldGVzLWNsaWVudCIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6ImU5YmRlNmJhLTE0ODAtNGViMC1hMWYxLTFkMjE1YWFjNTk4ZCIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlLXN5c3RlbTprdWJlcm5ldGVzLWNsaWVudCJ9.KjssR2onK6yqk4dxf6r8yFemS9HYqxrguTzMqgkwnSBZMf9x4VrH0WBmaPokcEKBigCsH12Ey501eEWvy0jBbQrwZQzc-f6AdXwI9EOX7anH0jhB7EZketEJlBlSGOgc6FVFIveOkRGMvMdjuE7ZusVj_3RsddiOqErDCaE7-n1NwWnkVb-T18w-8zLSI9QQZ5YI4VnAnuqINYOao4dds8jfV3wnl0hFzxzLDq6V8839PurSHwOa7yiVWTc3WUzu4TtRcZhLQ6irOB3BnYP4oDdD4ISeWXrinabux-zj4LNM3nxuKVB-zIRGNP_mWJCr4S4xzIimhiDXWsXLuyVxdg
         volumeMounts: 
         - name: "kubetoken"
           mountPath: "/etc/kubernetes"
@@ -72,7 +74,24 @@ spec:
       - name: "kubetoken"
         hostPath:
           path: "/etc/kubernetes"
---- 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubernetes-synchronizer
+  namespace: kube-system
+  labels: 
+    name: kubernetes-synchronizer
+spec:
+  type: NodePort
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+    name: http-port
+    nodePort: 30308
+  selector:
+    name: kubernetes-synchronizer
 --- 
 apiVersion: "apps/v1"
 kind: "Deployment"
@@ -128,15 +147,10 @@ metadata:
 spec:
   type: NodePort
   ports:
-  - port: 3306
-    protocol: TCP
-    targetPort: 3306
-    name: mysql-port
-    nodePort: 32306
   - port: 8080
     protocol: TCP
     targetPort: 8080
     name: adminer-port
-    nodePort: 32080
+    nodePort: 30307
   selector:
     name: kube-database
