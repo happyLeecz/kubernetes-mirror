@@ -54,8 +54,6 @@ public class Starter {
 		createSynchTargetsFromConfifMap(kubeClient.getResource(
 					Constants.KIND_CONFIGMAP, Constants.NS_KUBESYSTEM, NAME));
 		synchFromKubeToMysql(kubeClient, sqlClient);
-		Thread keepAlive = new Thread(new KeepAlive(kubeClient));
-		keepAlive.start();
 	}
 
 
