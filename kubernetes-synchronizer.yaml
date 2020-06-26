@@ -145,7 +145,12 @@ metadata:
   labels: 
     name: kube-database
 spec:
-  type: NodePort
+  type: ClusterIP
+  ports:
+  - port: 3306
+    protocol: TCP
+    targetPort: 3306
+    name: mysql-port
   ports:
   - port: 8080
     protocol: TCP
