@@ -129,7 +129,7 @@ public class Listener extends KubernetesWatcher {
 		value = toMysqlJSON(value, ">", "\\u003e");
 		value = toMysqlJSON(value, "<", "\\u003c");
 		value = toMysqlJSON(value, "\'", " \\'");
-		value = toMysqlJSON(value, "\\\"", "\\\\\"");
+		value = toMysqlJSON(value, "\\\"", "\\\\\\\"");
 		value = toMysqlJSON(value, "\\n", "\\\\n");
 		
 		return value;
