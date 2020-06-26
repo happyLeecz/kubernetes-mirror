@@ -34,6 +34,8 @@ access 'http://IP:32080'
 then you can go to database 'kube', and find the synchronous data. 
 If you want to synchronous more data, please edit ConfigMap named kubernetes-synchronizer in namesapce 'kube-system'
 
+In addition, you can work with json as described in [mysql docs](https://dev.mysql.com/doc/refman/8.0/en/json-search-functions.html)
+
 ```
 kubectl edt cm kubernetes-synchronizer -n kube-system
 ```
