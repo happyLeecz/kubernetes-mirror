@@ -15,7 +15,6 @@
 		<kubeclient.version>0.6</kubeclient.version>
 		<jdbc.version>8.0.19</jdbc.version>
 		<druid.version>1.1.22</druid.version>
-		<httpfrk.version>1.11</httpfrk.version>
 	</properties>
 
 	<dependencies>
@@ -38,36 +37,11 @@
 			<artifactId>druid</artifactId>
 			<version>${druid.version}</version>
 		</dependency>
-
-		<dependency>
-			<groupId>com.github.kubesys</groupId>
-			<artifactId>kubernetes-httpfrk</artifactId>
-			<version>${httpfrk.version}</version>
-		</dependency>
-
 	</dependencies>
 
 
 	<build>
 		<plugins>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<mainClass>com.github.kubesys.synchronizer.httpserver.ApplicationServer</mainClass>
-				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>repackage</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
