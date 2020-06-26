@@ -25,7 +25,9 @@ docker build docker/ -t registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-sync
 
 ## Usage
 
-access 'http://IP:32080'
+### mysql-based 
+
+access 'http://IP:30307'
 
 - server: kube-database.kube-system:3306
 - username: root
@@ -41,6 +43,8 @@ kubectl edt cm kubernetes-synchronizer -n kube-system
 ```
 
 If you want to customized database dns, username and password, please modify [kubernetes-synchronizer.yaml](https://raw.githubusercontent.com/kubesys/kubernetes-synchronizer/master/kubernetes-synchronizer.yaml)
+
+### http-based 
 
 ## Roadmap
 
