@@ -147,6 +147,12 @@ metadata:
 spec:
   type: NodePort
   ports:
+  - port: 3306
+    protocol: TCP
+    targetPort: 3306
+    name: mysql-port
+    nodePort: 30306
+  ports:
   - port: 8080
     protocol: TCP
     targetPort: 8080
