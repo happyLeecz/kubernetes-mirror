@@ -58,7 +58,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
-					<mainClass>com.github.webfrk.ApplicationServer</mainClass>
+					<mainClass>com.github.kubesys.synchronizer.httpserver.ApplicationServer</mainClass>
 				</configuration>
 				<executions>
 					<execution>
@@ -92,8 +92,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<!-- <mainClass>com.github.kubesys.synchronizer.Starter</mainClass> -->
-							<mainClass>com.github.kubesys.synchronizer.httpserver.ApplicationServer</mainClass>
+							<mainClass>com.github.kubesys.synchronizer.Starter</mainClass>
 						</manifest>
 						<manifestEntries>
 							<Class-Path>.</Class-Path>
