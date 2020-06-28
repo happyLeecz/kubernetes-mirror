@@ -53,14 +53,12 @@ public final class Constants {
 	
 	public static final String SQL_DELETE            				= "delete";
 	
-//	protected static final String JDBC     = "jdbc:mysql://kube-database.kube-system:3306?useUnicode=true&characterEncoding=UTF8&connectTimeout=2000&socketTimeout=6000&autoReconnect=true&&serverTimezone=Asia/Shanghai";
+	public static final String JDBC                                 = "jdbc:mysql://kube-database.kube-system:3306?autoReconnect=true";
 	
-	public static final String JDBC     = "jdbc:mysql://kube-database.kube-system:3306?autoReconnect=true";
+	public static final String USER                                 = "root";
 	
-	public static final String USER     = "root";
+	public static final String PWD                                  = "onceas";
 	
-	public static final String PWD      = "onceas";
-	
-	public static final String DB       = "kube";
+	public static final String DB                                   = "kube";
 
 }

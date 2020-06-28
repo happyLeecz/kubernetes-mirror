@@ -3,6 +3,7 @@
  */
 package com.github.kubesys.synchronizer;
 
+import java.lang.reflect.Constructor;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -16,6 +17,7 @@ import com.mysql.cj.jdbc.Driver;
 
 import io.github.kubesys.KubernetesClient;
 import io.github.kubesys.KubernetesConstants;
+import okhttp3.WebSocketListener;
 
 /**
  * @author wuheng@otcaix.iscas.ac.cn
@@ -49,11 +51,11 @@ public class Starter {
 
 	public static void main(String[] args) throws Exception {
 		
-		KubernetesClient kubeClient = getKubeClient();
-		MysqlClient sqlClient = getSqlClient();
-		createSynchTargetsFromConfifMap(kubeClient.getResource(
+		KubernetesClient srcClient = getKubeClient();
+		MysqlClient dstClient = getSqlClient();
+		createSynchTargetsFromConfifMap(srcClient.getResource(
 					Constants.KIND_CONFIGMAP, Constants.NS_KUBESYSTEM, NAME));
-		synchFromKubeToMysql(kubeClient, sqlClient);
+		synchFromKubeToMysql(srcClient, dstClient);
 	}
 
 
@@ -62,7 +64,7 @@ public class Starter {
 	 * @throws SQLException
 	 * @throws Exception
 	 */
-	public static MysqlClient getSqlClient() throws SQLException, Exception {
+	public static MysqlClient getSqlClient() throws Exception {
 		MysqlClient sqlClient = new MysqlClient(createDataSource().getConnection());
 
 		if (sqlClient.hasDatabase(Constants.DB)) {
@@ -82,15 +84,21 @@ public class Starter {
 	protected static void watchKubernetesCRDKinds(KubernetesClient kubeClient, MysqlClient sqlClient) throws Exception {
 		kubeClient.watchResources(Constants.KIND_CUSTOMRESOURCEDEFINTION, 
 							KubernetesConstants.VALUE_ALL_NAMESPACES, 
-							new Listener(Constants.KIND_CUSTOMRESOURCEDEFINTION, kubeClient, sqlClient));
+							new Synchronizer(Constants.KIND_CUSTOMRESOURCEDEFINTION, kubeClient, sqlClient));
 	}
 
 	public static void synchFromKubeToMysql(KubernetesClient kubeClient, MysqlClient sqlClient) throws Exception {
+		synchFromKubeToMysql(kubeClient, sqlClient, Synchronizer.class.getName());
+	}
+	
+	public static void synchFromKubeToMysql(KubernetesClient kubeClient, MysqlClient sqlClient, String classname) throws Exception {
 		for (String kind : synchTargets) {
 			String tableName = kubeClient.getConfig().getName(kind);
 			sqlClient.createTable(Constants.DB, tableName);
-			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
-										new Listener(kind, kubeClient, sqlClient));
+			Constructor<?> c = Class.forName(classname).getConstructor(String.class, 
+					KubernetesClient.class, MysqlClient.class);
+			WebSocketListener listener = (WebSocketListener) c.newInstance(kind, kubeClient, sqlClient);
+			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, listener);
 		}
 	}
 
@@ -134,7 +142,7 @@ public class Starter {
         props.put("druid.maxActive", 100);
         props.put("druid.maxWait", 3000);
         props.put("druid.keepAlive", true);
-        props.put("druid.validationQuery", MysqlClient.CHECK_DATABASE.replace("#DATBASE#", "kube"));
+//        props.put("druid.validationQuery", MysqlClient.CHECK_DATABASE.replace("#DATBASE#", "kube"));
         DruidDataSource dataSource = new DruidDataSource();
         dataSource.configFromPropety(props);
         return dataSource;

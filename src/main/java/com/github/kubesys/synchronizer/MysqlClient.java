@@ -44,6 +44,14 @@ public class MysqlClient {
 	public static final String CREATE_TABLE    = "CREATE TABLE #TABLE# (name varchar(250), namespace varchar(250), data json, primary key(name, namespace))";
 	
 	public static final String DELETE_TABLE    = "DROP TABLE #TABLE#";
+	
+	
+	public static final String INSERT_OBJECT   = "INSERT INTO #TABLE# VALUES ('#NAME#', '#NAMESPACE#', '#JSON#')";
+	
+	public static final String UPDATE_OBJECT   = "UPDATE #TABLE# SET data = '#JSON#' WHERE name = '#NAME#' and namespace = '#NAMESPACE#'";
+	
+	public static final String DELETE_OBJECT   = "DELETE FROM #TABLE# WHERE name = '#NAME#' and namespace = '#NAMESPACE#'";
+	
 	/**
 	 * conn
 	 */
@@ -178,6 +186,57 @@ public class MysqlClient {
 				pstmt.close();
 			}
 		}
+	}
+	
+	/**
+	 * @param table                                  table
+	 * @param name                                   name
+	 * @param namespace                              namespace
+	 * @param json                                   json
+	 * @return                                       true or false
+	 * @throws Exception                             exception
+	 */
+	public boolean insertObject(String table, String name, String namespace, String json) throws Exception {
+		if(!exec(Constants.DB, INSERT_OBJECT
+					.replace(MysqlClient.LABEL_TABLE, table)
+					.replace(MysqlClient.LABEL_NAME, name)
+					.replace(MysqlClient.LABEL_NAMESPACE, namespace)
+					.replace(MysqlClient.LABEL_JSON, json))) {
+			return updateObject(table, name, namespace, json);
+		}
+		return true;
+	}
+	
+	/**
+	 * @param table                                  table
+	 * @param name                                   name
+	 * @param namespace                              namespace
+	 * @param json                                   json
+	 * @return                                       true or false
+	 * @throws Exception                             exception
+	 */
+	public boolean updateObject(String table, String name, String namespace, String json) throws Exception {
+		return exec(Constants.DB, UPDATE_OBJECT
+					.replace(MysqlClient.LABEL_TABLE, table)
+					.replace(MysqlClient.LABEL_NAME, name)
+					.replace(MysqlClient.LABEL_NAMESPACE, namespace)
+					.replace(MysqlClient.LABEL_JSON, json));		
+	}
+	
+	/**
+	 * @param table                                  table
+	 * @param name                                   name
+	 * @param namespace                              namespace
+	 * @param json                                   json
+	 * @return                                       true or false
+	 * @throws Exception                             exception
+	 */
+	public boolean deleteObject(String table, String name, String namespace, String json) throws Exception {
+		return exec(Constants.DB, DELETE_OBJECT
+					.replace(MysqlClient.LABEL_TABLE, table)
+					.replace(MysqlClient.LABEL_NAME, name)
+					.replace(MysqlClient.LABEL_NAMESPACE, namespace)
+					.replace(MysqlClient.LABEL_JSON, json));		
 	}
 
 	public Connection getConn() {

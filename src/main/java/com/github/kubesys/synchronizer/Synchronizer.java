@@ -1,93 +1,109 @@
-/*
-
+/**
  * Copyright (2019, ) Institute of Software, Chinese Academy of Sciences
  */
 package com.github.kubesys.synchronizer;
 
-import java.sql.Connection;
 import java.util.logging.Logger;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
+import io.github.kubesys.KubernetesClient;
+import io.github.kubesys.KubernetesConstants;
+import io.github.kubesys.KubernetesException;
+import io.github.kubesys.KubernetesWatcher;
+
 /**
- * @author wuheng@otcaix.iscas.ac.cn
- * 
- * @version 1.2.0
- * @since   2020/4/23
- *
+ * @author wuheng
+ * @since 2019.4.20
  */
-public class Synchronizer {
-	
+public class Synchronizer extends KubernetesWatcher {
+
 	public static final Logger m_logger = Logger.getLogger(Synchronizer.class.getName());
+	
+	/**
+	 * client
+	 */
+	protected final KubernetesClient kubeClient;
+	
+	protected final MysqlClient sqlClient;
 
-	public static final String INSERT_OBJECT   = "INSERT INTO #TABLE# VALUES ('#NAME#', '#NAMESPACE#', '#JSON#')";
+	protected final String kind;
 	
-	public static final String UPDATE_OBJECT   = "UPDATE #TABLE# SET data = '#JSON#' WHERE name = '#NAME#' and namespace = '#NAMESPACE#'";
+	protected final String tableName;
 	
-	public static final String DELETE_OBJECT   = "DELETE FROM #TABLE# WHERE name = '#NAME#' and namespace = '#NAMESPACE#'";
-	
-	
-	
-	protected final MysqlClient dbHelper;
-
-	public Synchronizer(MysqlClient dbHelper) {
+	public Synchronizer(String kind, KubernetesClient kubeClient, MysqlClient sqlClient) {
 		super();
-		this.dbHelper = dbHelper;
+		this.kind = kind;
+		this.kubeClient = kubeClient;
+		this.sqlClient = sqlClient;
+		this.tableName = kubeClient.getConfig().getName(kind);
 	}
-	
-	
-	/**
-	 * @param table                                  table
-	 * @param name                                   name
-	 * @param namespace                              namespace
-	 * @param json                                   json
-	 * @return                                       true or false
-	 * @throws Exception                             exception
-	 */
-	public boolean insertObject(String table, String name, String namespace, String json) throws Exception {
-		if(!dbHelper.exec(Constants.DB, INSERT_OBJECT
-					.replace(MysqlClient.LABEL_TABLE, table)
-					.replace(MysqlClient.LABEL_NAME, name)
-					.replace(MysqlClient.LABEL_NAMESPACE, namespace)
-					.replace(MysqlClient.LABEL_JSON, json))) {
-			return updateObject(table, name, namespace, json);
-		}
-		return true;
-	}
-	
-	/**
-	 * @param table                                  table
-	 * @param name                                   name
-	 * @param namespace                              namespace
-	 * @param json                                   json
-	 * @return                                       true or false
-	 * @throws Exception                             exception
-	 */
-	public boolean updateObject(String table, String name, String namespace, String json) throws Exception {
-		return dbHelper.exec(Constants.DB, UPDATE_OBJECT
-					.replace(MysqlClient.LABEL_TABLE, table)
-					.replace(MysqlClient.LABEL_NAME, name)
-					.replace(MysqlClient.LABEL_NAMESPACE, namespace)
-					.replace(MysqlClient.LABEL_JSON, json));		
-	}
-	
-	/**
-	 * @param table                                  table
-	 * @param name                                   name
-	 * @param namespace                              namespace
-	 * @param json                                   json
-	 * @return                                       true or false
-	 * @throws Exception                             exception
-	 */
-	public boolean deleteObject(String table, String name, String namespace, String json) throws Exception {
-		return dbHelper.exec(Constants.DB, DELETE_OBJECT
-					.replace(MysqlClient.LABEL_TABLE, table)
-					.replace(MysqlClient.LABEL_NAME, name)
-					.replace(MysqlClient.LABEL_NAMESPACE, namespace)
-					.replace(MysqlClient.LABEL_JSON, json));		
-	}
-	
 
-	public Connection getConn() {
-		return dbHelper.getConn();
+
+	/******************************************************
+	 * 
+	 * Lifecycle
+	 * 
+	 ******************************************************/
+	public void doAdded(JsonNode json) {
+
+		if (Constants.KIND_CUSTOMRESOURCEDEFINTION.equals(kind)) {
+			
+			String newKind = json.get(Constants.YAML_SPEC).get(Constants.YAML_SPEC_NAMES)
+										.get(Constants.YAML_SPEC_NAMES_KIND).asText();
+			
+			if (!Starter.synchTargets.contains(newKind)) {
+				return;
+			}
+			
+			kubeClient.watchResources(newKind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
+									new Synchronizer(newKind, kubeClient, sqlClient));
+		} 
+
+		// 
+		try {
+			sqlClient.insertObject(tableName, Utils.getName(json), 
+					Utils.getNamespace(json), Utils.getJsonWithoutAnotation(json));
+			m_logger.info("insert object  " + json + " successfully.");
+		} catch (Exception e) {
+			m_logger.severe("fail to insert object because of missing table " + tableName + ":" + e);
+		}
+
 	}
-	
+
+	public void doModified(JsonNode json) {
+		
+		try {
+			sqlClient.updateObject(kubeClient.getConfig().getName(kind), Utils.getName(json), 
+					Utils.getNamespace(json), Utils.getJsonWithoutAnotation(json));
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+
+	}
+
+	public void doDeleted(JsonNode json) {
+		
+		try {
+			sqlClient.deleteObject(kubeClient.getConfig().getName(kind), 
+					Utils.getName(json), Utils.getNamespace(json), Utils.getJsonWithoutAnotation(json));
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+
+	}
+
+
+	@Override
+	public void doOnClose(KubernetesException exception) {
+		
+		m_logger.severe("caused by" + exception);
+		if (Starter.synchTargets.contains(kind)) {
+			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
+								new Synchronizer(kind, kubeClient, sqlClient));
+		}
+		m_logger.info("start synchronizer '" + kind + "'.");
+	}
+
+
 }
