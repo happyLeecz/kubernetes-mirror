@@ -168,16 +168,12 @@ spec:
         imagePullPolicy: "IfNotPresent"
         ports:
         - containerPort: 15672  
-          name: rabbit15672  
-          protocol: TCP  
         - containerPort: 5672   
-          name: rabbit5672   
-          protocol: TCP
         volumeMounts:
         - name: "rabbit-persistent-storage"
           mountPath: "/bitnami"
       volumes: 
-      - name: "rabbit-persistent-storage "
+      - name: "rabbit-persistent-storage"
         hostPath:
           path: "/var/lib/rabbitmq"
 ---
@@ -191,12 +187,12 @@ metadata:
 spec:
   type: NodePort
   ports:
-  - name: rabbit15672  
+  - name: rabbitmq-management-port
     nodePort: 30305  
     port: 15672  
     protocol: TCP  
     targetPort: 15672  
-  - name: rabbit15672   
+  - name: rabbitmq-port 
     nodePort: 30304   
     port: 5672   
     protocol: TCP   
