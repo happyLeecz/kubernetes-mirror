@@ -168,7 +168,12 @@ spec:
         imagePullPolicy: "IfNotPresent"
         ports:
         - containerPort: 15672  
-        - containerPort: 5672   
+        - containerPort: 5672  
+        env:
+        - name: "RABBITMQ_USERNAME"
+          value: "root"
+        - name: "RABBITMQ_PASSWORD"
+          value: "onceas" 
         volumeMounts:
         - name: "rabbit-persistent-storage"
           mountPath: "/bitnami"
