@@ -52,6 +52,6 @@ If you want to customized database dns, username and password, please modify [ku
   - 0.1: using mysql-connector-java
   - 0.2: using druid
   - 0.3: support keep alive
-  - 0.4: provide http-based query
+  - 0.6: support rabbitmq
 - Development
 
