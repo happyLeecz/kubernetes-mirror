@@ -39,7 +39,7 @@ public class Starter {
 	/**
 	 * name
 	 */
-	public static final String NAME = "kubernetes-synchronizer";
+	public static final String NAME = "kube-synchronizer";
 	
 	/*****************************************************************************************
 	 * 
@@ -57,21 +57,6 @@ public class Starter {
 		synchFromKubeToMysql(srcClient, dstClient, pusher);
 	}
 
-
-	/**
-	 * @return
-	 * @throws SQLException
-	 * @throws Exception
-	 */
-	public static MysqlClient getSqlClient() throws Exception {
-		MysqlClient sqlClient = new MysqlClient(createDataSource().getConnection());
-
-		if (sqlClient.hasDatabase(Constants.DB)) {
-			sqlClient.dropDatabase(Constants.DB);
-		}
-		sqlClient.createDatabase(Constants.DB);
-		return sqlClient;
-	}
 
 	
 	/*****************************************************************************************
@@ -119,6 +104,20 @@ public class Starter {
 								: new KubernetesClient(url, token);
 	}
 
+	/**
+	 * @return
+	 * @throws SQLException
+	 * @throws Exception
+	 */
+	public static MysqlClient getSqlClient() throws Exception {
+		MysqlClient sqlClient = new MysqlClient(createDataSource().getConnection());
+
+		if (sqlClient.hasDatabase(Constants.DB)) {
+			sqlClient.dropDatabase(Constants.DB);
+		}
+		sqlClient.createDatabase(Constants.DB);
+		return sqlClient;
+	}
 	
 	private static DruidDataSource createDataSource() throws Exception {
         Properties props = new Properties();
