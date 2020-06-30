@@ -56,9 +56,9 @@ public class Mapper {
 	static DruidDataSource createDataSourceFromResource(String resource) throws IOException {
         Properties props = new Properties();
         props.put("druid.driverClassName", Driver.class.getName());
-        props.put("druid.url", Constants.JDBC);
-        props.put("druid.username", Constants.USER);
-        props.put("druid.password", Constants.PWD);
+        props.put("druid.url", "jdbc:mysql://kube-database.kube-system:3306");
+        props.put("druid.username", "root");
+        props.put("druid.password", "onceas");
         props.put("druid.initialSize", 10);
         props.put("druid.maxActive", 100);
         props.put("druid.maxWait", 3000);

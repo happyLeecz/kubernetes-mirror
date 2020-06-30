@@ -2,6 +2,17 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
+  name: kube-database
+  namespace: kube-system
+data:
+  DRIVER: com.mysql.cj.jdbc.Driver
+  JDBC: jdbc:mysql://kube-database.kube-system:3306
+  USER: root
+  PASSWORD: onceas
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
   name: kube-synchronizer
   namespace: kube-system
 data:
@@ -54,7 +65,7 @@ spec:
           effect: NoSchedule
       containers:
       - name: "kube-synchronizer"
-        image: "registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-synchronizer:v0.6-amd64"
+        image: "registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-synchronizer:v0.7-amd64"
         imagePullPolicy: "IfNotPresent"
         command: 
         - "java"

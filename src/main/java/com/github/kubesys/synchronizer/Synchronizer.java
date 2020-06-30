@@ -8,11 +8,11 @@ import java.util.logging.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import io.github.kubesys.KubernetesClient;
-import io.github.kubesys.KubernetesConstants;
-import io.github.kubesys.KubernetesException;
-import io.github.kubesys.KubernetesWatcher;
+import com.github.kubesys.KubernetesClient;
+import com.github.kubesys.KubernetesConstants;
+import com.github.kubesys.KubernetesException;
+import com.github.kubesys.KubernetesWatcher;
+import com.github.kubesys.sqlclient.SqlClient;
 
 /**
  * @author wuheng
@@ -27,7 +27,7 @@ public class Synchronizer extends KubernetesWatcher {
 	 */
 	protected final KubernetesClient kubeClient;
 	
-	protected final MysqlClient sqlClient;
+	protected final SqlClient sqlClient;
 
 	protected final Pusher pusher;
 	
@@ -35,7 +35,7 @@ public class Synchronizer extends KubernetesWatcher {
 	
 	protected final String tableName;
 	
-	public Synchronizer(String kind, KubernetesClient kubeClient, MysqlClient sqlClient, Pusher pusher) {
+	public Synchronizer(String kind, KubernetesClient kubeClient, SqlClient sqlClient, Pusher pusher) {
 		super();
 		this.kind = kind;
 		this.kubeClient = kubeClient;

@@ -6,16 +6,14 @@ package com.github.kubesys.synchronizer;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import com.alibaba.druid.pool.DruidDataSource;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.mysql.cj.jdbc.Driver;
-
-import io.github.kubesys.KubernetesClient;
-import io.github.kubesys.KubernetesConstants;
+import com.github.kubesys.KubernetesClient;
+import com.github.kubesys.KubernetesConstants;
+import com.github.kubesys.sqlclient.SqlClient;
+import com.github.kubesys.sqlclient.SqlUtils;
 
 /**
  * @author wuheng@otcaix.iscas.ac.cn
@@ -39,7 +37,9 @@ public class Starter {
 	/**
 	 * name
 	 */
-	public static final String NAME = "kube-synchronizer";
+	public static final String SYNCH_NAME = "kube-synchronizer";
+	
+	public static final String DATABASE_NAME = "kube-database";
 	
 	/*****************************************************************************************
 	 * 
@@ -49,12 +49,13 @@ public class Starter {
 
 	public static void main(String[] args) throws Exception {
 		
-		KubernetesClient srcClient = getKubeClient();
-		MysqlClient dstClient = getSqlClient();
+		KubernetesClient kubeClient = getKubeClient();
+		SqlClient sqlClient = getSqlClientBy(kubeClient, DATABASE_NAME);
+		createSynchTargetsFromConfifMap(kubeClient.getResource(
+					Constants.KIND_CONFIGMAP, Constants.NS_KUBESYSTEM, SYNCH_NAME));
+		
 		Pusher pusher = new Pusher();		
-		createSynchTargetsFromConfifMap(srcClient.getResource(
-					Constants.KIND_CONFIGMAP, Constants.NS_KUBESYSTEM, NAME));
-		synchFromKubeToMysql(srcClient, dstClient, pusher);
+		synchFromKubeToMysql(kubeClient, sqlClient, pusher);
 	}
 
 
@@ -65,10 +66,10 @@ public class Starter {
 	 * 
 	 *****************************************************************************************/
 	
-	public static void synchFromKubeToMysql(KubernetesClient kubeClient, MysqlClient sqlClient, Pusher pusher) throws Exception {
+	public static void synchFromKubeToMysql(KubernetesClient kubeClient, SqlClient sqlClient, Pusher pusher) throws Exception {
 		for (String kind : synchTargets) {
 			String tableName = kubeClient.getConfig().getName(kind);
-			sqlClient.createTable(Constants.DB, tableName);
+			sqlClient.createTable(SqlClient.DEFAULT_DB, tableName);
 			Synchronizer synchronizer = new Synchronizer(kind, kubeClient, sqlClient, pusher);
 			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, synchronizer);
 		}
@@ -109,30 +110,21 @@ public class Starter {
 	 * @throws SQLException
 	 * @throws Exception
 	 */
-	public static MysqlClient getSqlClient() throws Exception {
-		MysqlClient sqlClient = new MysqlClient(createDataSource().getConnection());
+	public static SqlClient getSqlClientBy(KubernetesClient kubeClient, String config) throws Exception {
+		
+		JsonNode data = kubeClient.getResource(Constants.KIND_CONFIGMAP, Constants.NS_KUBESYSTEM, config).get("data");
+		
+		SqlClient sqlClient = new SqlClient(SqlUtils.createConnection(
+											data.get("DRIVER").asText(), 
+											data.get("JDBC").asText(), 
+											data.get("USER").asText(), 
+											data.get("PASSWORD").asText()));
 
-		if (sqlClient.hasDatabase(Constants.DB)) {
-			sqlClient.dropDatabase(Constants.DB);
+		if (sqlClient.hasDatabase(SqlClient.DEFAULT_DB)) {
+			sqlClient.dropDatabase(SqlClient.DEFAULT_DB);
 		}
-		sqlClient.createDatabase(Constants.DB);
+		sqlClient.createDatabase(SqlClient.DEFAULT_DB);
 		return sqlClient;
 	}
-	
-	private static DruidDataSource createDataSource() throws Exception {
-        Properties props = new Properties();
-        props.put("druid.driverClassName", Driver.class.getName());
-        props.put("druid.url", Constants.JDBC);
-        props.put("druid.username", Constants.USER);
-        props.put("druid.password", Constants.PWD);
-        props.put("druid.initialSize", 10);
-        props.put("druid.maxActive", 100);
-        props.put("druid.maxWait", 3000);
-        props.put("druid.keepAlive", true);
-//        props.put("druid.validationQuery", MysqlClient.CHECK_DATABASE.replace("#DATBASE#", "kube"));
-        DruidDataSource dataSource = new DruidDataSource();
-        dataSource.configFromPropety(props);
-        return dataSource;
-    }
 	
 }
