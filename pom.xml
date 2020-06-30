@@ -5,7 +5,7 @@
 
 	<groupId>com.github.kubesys</groupId>
 	<artifactId>kubernetes-synchronizer</artifactId>
-	<version>0.7</version>
+	<version>0.8</version>
 	<packaging>jar</packaging>
 
 	<name>kubernetes-synchronizer</name>
@@ -13,10 +13,7 @@
 
 	<properties>
 		<kubeclient.version>0.7</kubeclient.version>
-		<sqlclient.version>0.1</sqlclient.version>
-		<jdbc.version>8.0.19</jdbc.version>
-		<druid.version>1.1.22</druid.version>
-		<rabbitmq.version>5.9.0</rabbitmq.version>
+		<kubeextclient.version>0.2</kubeextclient.version>
 	</properties>
 
 	<dependencies>
@@ -28,15 +25,8 @@
 
 		<dependency>
 			<groupId>com.github.kubesys</groupId>
-			<artifactId>kubernetes-sqlclient</artifactId>
-			<version>${sqlclient.version}</version>
-		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/com.rabbitmq/amqp-client -->
-		<dependency>
-			<groupId>com.rabbitmq</groupId>
-			<artifactId>amqp-client</artifactId>
-			<version>${rabbitmq.version}</version>
+			<artifactId>kubernetes-extclient</artifactId>
+			<version>${kubeextclient.version}</version>
 		</dependency>
 
 	</dependencies>

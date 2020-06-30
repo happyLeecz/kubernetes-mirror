@@ -3,7 +3,6 @@
  */
 package com.github.kubesys.synchronizer;
 
-import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -12,8 +11,11 @@ import java.util.logging.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.kubesys.KubernetesClient;
 import com.github.kubesys.KubernetesConstants;
+import com.github.kubesys.mqclient.AMQClient;
+import com.github.kubesys.mqclient.AMQUtils;
 import com.github.kubesys.sqlclient.SqlClient;
 import com.github.kubesys.sqlclient.SqlUtils;
+import com.rabbitmq.client.ConnectionFactory;
 
 /**
  * @author wuheng@otcaix.iscas.ac.cn
@@ -41,6 +43,8 @@ public class Starter {
 	
 	public static final String DATABASE_NAME = "kube-database";
 	
+	public static final String AMQP_NAME = "kube-rabbitmq";
+	
 	/*****************************************************************************************
 	 * 
 	 * Main
@@ -51,11 +55,10 @@ public class Starter {
 		
 		KubernetesClient kubeClient = getKubeClient();
 		SqlClient sqlClient = getSqlClientBy(kubeClient, DATABASE_NAME);
-		createSynchTargetsFromConfifMap(kubeClient.getResource(
+		confirmSynchDataFromConfifMap(kubeClient.getResource(
 					Constants.KIND_CONFIGMAP, Constants.NS_KUBESYSTEM, SYNCH_NAME));
 		
-		Pusher pusher = new Pusher();		
-		synchFromKubeToMysql(kubeClient, sqlClient, pusher);
+		dataFromKubeToMysqlAndPushToMQ(kubeClient, sqlClient, getAMQClientBy(kubeClient, AMQP_NAME));
 	}
 
 
@@ -66,17 +69,17 @@ public class Starter {
 	 * 
 	 *****************************************************************************************/
 	
-	public static void synchFromKubeToMysql(KubernetesClient kubeClient, SqlClient sqlClient, Pusher pusher) throws Exception {
+	public static void dataFromKubeToMysqlAndPushToMQ(KubernetesClient kubeClient, SqlClient sqlClient, AMQClient pusher) throws Exception {
 		for (String kind : synchTargets) {
 			String tableName = kubeClient.getConfig().getName(kind);
-			sqlClient.createTable(SqlClient.DEFAULT_DB, tableName);
+			sqlClient.createTable(tableName);
 			Synchronizer synchronizer = new Synchronizer(kind, kubeClient, sqlClient, pusher);
 			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, synchronizer);
 		}
 	}
 	
 
-	public static void createSynchTargetsFromConfifMap(JsonNode node) throws Exception {
+	public static void confirmSynchDataFromConfifMap(JsonNode node) throws Exception {
 		
 		try {
 			Iterator<JsonNode> elements = node.get(Constants.YAML_DATA).elements();
@@ -97,6 +100,10 @@ public class Starter {
 	 * 
 	 *****************************************************************************************/
 
+	/**
+	 * @return                               client
+	 * @throws Exception                     exception
+	 */
 	public static KubernetesClient getKubeClient() throws Exception {
 		String url    = System.getenv("URL");
 		String token  = System.getenv("TOKEN");
@@ -106,9 +113,29 @@ public class Starter {
 	}
 
 	/**
-	 * @return
-	 * @throws SQLException
-	 * @throws Exception
+	 * @param kubeClient                     client            
+	 * @param config                         config
+	 * @return                               sqlclient
+	 * @throws Exception                     exception
+	 */
+	public static AMQClient getAMQClientBy(KubernetesClient kubeClient, String config) throws Exception {
+		
+		JsonNode data = kubeClient.getResource(Constants.KIND_CONFIGMAP, Constants.NS_KUBESYSTEM, config).get("data");
+		
+		ConnectionFactory factory = AMQUtils.createConnectionFactory(
+											data.get("HOST").asText(), 
+											data.get("USER").asText(), 
+											data.get("PASSWORD").asText(), 
+											data.get("PORT").asInt());
+
+		return new AMQClient(factory.newConnection(), data.get("QUEUE").asText());
+	}
+	
+	/**
+	 * @param kubeClient                     client            
+	 * @param config                         config
+	 * @return                               sqlclient
+	 * @throws Exception                     exception
 	 */
 	public static SqlClient getSqlClientBy(KubernetesClient kubeClient, String config) throws Exception {
 		
@@ -118,12 +145,14 @@ public class Starter {
 											data.get("DRIVER").asText(), 
 											data.get("JDBC").asText(), 
 											data.get("USER").asText(), 
-											data.get("PASSWORD").asText()));
+											data.get("PASSWORD").asText()),
+										data.get("DATABASE").asText());
 
-		if (sqlClient.hasDatabase(SqlClient.DEFAULT_DB)) {
-			sqlClient.dropDatabase(SqlClient.DEFAULT_DB);
+		if (sqlClient.hasDatabase()) {
+			sqlClient.dropDatabase();
 		}
-		sqlClient.createDatabase(SqlClient.DEFAULT_DB);
+		sqlClient.createDatabase();
+		
 		return sqlClient;
 	}
 	

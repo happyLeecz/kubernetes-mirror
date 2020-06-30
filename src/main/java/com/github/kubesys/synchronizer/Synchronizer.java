@@ -12,6 +12,7 @@ import com.github.kubesys.KubernetesClient;
 import com.github.kubesys.KubernetesConstants;
 import com.github.kubesys.KubernetesException;
 import com.github.kubesys.KubernetesWatcher;
+import com.github.kubesys.mqclient.AMQClient;
 import com.github.kubesys.sqlclient.SqlClient;
 
 /**
@@ -29,13 +30,13 @@ public class Synchronizer extends KubernetesWatcher {
 	
 	protected final SqlClient sqlClient;
 
-	protected final Pusher pusher;
+	protected final AMQClient pusher;
 	
 	protected final String kind;
 	
 	protected final String tableName;
 	
-	public Synchronizer(String kind, KubernetesClient kubeClient, SqlClient sqlClient, Pusher pusher) {
+	public Synchronizer(String kind, KubernetesClient kubeClient, SqlClient sqlClient, AMQClient pusher) {
 		super();
 		this.kind = kind;
 		this.kubeClient = kubeClient;
@@ -71,7 +72,7 @@ public class Synchronizer extends KubernetesWatcher {
 					Utils.getNamespace(json, kubeClient.getConfig().isNamespaced(kind)), 
 					Utils.getJsonWithoutAnotation(json));
 			m_logger.info("insert object  " + json + " successfully.");
-			pusher.push(getJSON("ADDED", json));
+			pusher.send(getJSON("ADDED", json));
 		} catch (Exception e) {
 			m_logger.severe("fail to insert object because of missing table " + tableName + ":" + e);
 		}
@@ -84,7 +85,7 @@ public class Synchronizer extends KubernetesWatcher {
 			sqlClient.updateObject(kubeClient.getConfig().getName(kind), Utils.getName(json), 
 					Utils.getNamespace(json, kubeClient.getConfig().isNamespaced(kind)), 
 					Utils.getJsonWithoutAnotation(json));
-			pusher.push(getJSON("MODIFIED", json));
+			pusher.send(getJSON("MODIFIED", json));
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -97,7 +98,7 @@ public class Synchronizer extends KubernetesWatcher {
 			sqlClient.deleteObject(kubeClient.getConfig().getName(kind), Utils.getName(json), 
 					Utils.getNamespace(json, kubeClient.getConfig().isNamespaced(kind)), 
 					Utils.getJsonWithoutAnotation(json));
-			pusher.push(getJSON("DELETED", json));
+			pusher.send(getJSON("DELETED", json));
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}

@@ -5,6 +5,7 @@ package com.github.kubesys.synchronizer;
 
 import java.io.IOException;
 
+import com.github.kubesys.mqclient.AMQClient;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -36,7 +37,7 @@ public class Puller {
 		factory.setPort(30304);
 		Connection connection = factory.newConnection();
 		Channel channel = connection.createChannel();
-		channel.queueDeclare(Pusher.queueName, false, false, false, null);
+		channel.queueDeclare(AMQClient.DEFAULT_QUEUE, false, false, false, null);
 		// 创建队列消费者
 		Consumer consumer = new DefaultConsumer(channel) {
 			
@@ -48,7 +49,7 @@ public class Puller {
             }
 		};
 		// 消息确认机制
-		channel.basicConsume(Pusher.queueName, true, consumer);
+		channel.basicConsume(AMQClient.DEFAULT_QUEUE, true, consumer);
 
 	}
 
