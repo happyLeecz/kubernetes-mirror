@@ -6,6 +6,8 @@ package com.github.kubesys.synchronizer;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import io.github.kubesys.KubernetesClient;
 import io.github.kubesys.KubernetesConstants;
@@ -27,15 +29,18 @@ public class Synchronizer extends KubernetesWatcher {
 	
 	protected final MysqlClient sqlClient;
 
+	protected final Pusher pusher;
+	
 	protected final String kind;
 	
 	protected final String tableName;
 	
-	public Synchronizer(String kind, KubernetesClient kubeClient, MysqlClient sqlClient) {
+	public Synchronizer(String kind, KubernetesClient kubeClient, MysqlClient sqlClient, Pusher pusher) {
 		super();
 		this.kind = kind;
 		this.kubeClient = kubeClient;
 		this.sqlClient = sqlClient;
+		this.pusher = pusher;
 		this.tableName = kubeClient.getConfig().getName(kind);
 	}
 
@@ -57,14 +62,16 @@ public class Synchronizer extends KubernetesWatcher {
 			}
 			
 			kubeClient.watchResources(newKind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
-									new Synchronizer(newKind, kubeClient, sqlClient));
+									new Synchronizer(newKind, kubeClient, sqlClient, pusher));
 		} 
 
 		// 
 		try {
 			sqlClient.insertObject(tableName, Utils.getName(json), 
-					Utils.getNamespace(json), Utils.getJsonWithoutAnotation(json));
+					Utils.getNamespace(json, kubeClient.getConfig().isNamespaced(kind)), 
+					Utils.getJsonWithoutAnotation(json));
 			m_logger.info("insert object  " + json + " successfully.");
+			pusher.push(getJSON("ADDED", json));
 		} catch (Exception e) {
 			m_logger.severe("fail to insert object because of missing table " + tableName + ":" + e);
 		}
@@ -75,7 +82,9 @@ public class Synchronizer extends KubernetesWatcher {
 		
 		try {
 			sqlClient.updateObject(kubeClient.getConfig().getName(kind), Utils.getName(json), 
-					Utils.getNamespace(json), Utils.getJsonWithoutAnotation(json));
+					Utils.getNamespace(json, kubeClient.getConfig().isNamespaced(kind)), 
+					Utils.getJsonWithoutAnotation(json));
+			pusher.push(getJSON("MODIFIED", json));
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -85,14 +94,24 @@ public class Synchronizer extends KubernetesWatcher {
 	public void doDeleted(JsonNode json) {
 		
 		try {
-			sqlClient.deleteObject(kubeClient.getConfig().getName(kind), 
-					Utils.getName(json), Utils.getNamespace(json), Utils.getJsonWithoutAnotation(json));
+			sqlClient.deleteObject(kubeClient.getConfig().getName(kind), Utils.getName(json), 
+					Utils.getNamespace(json, kubeClient.getConfig().isNamespaced(kind)), 
+					Utils.getJsonWithoutAnotation(json));
+			pusher.push(getJSON("DELETED", json));
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 
 	}
 
+	protected JsonNode getJSON(String operator, JsonNode json) {
+		ObjectNode node = new ObjectMapper().createObjectNode();
+		node.put("operator", operator);
+		node.put("kind", json.get("kind").asText());
+		node.put("name", Utils.getName(json));
+		node.put("namespace", Utils.getNamespace(json, kubeClient.getConfig().isNamespaced(kind)));
+		return node;
+	}
 
 	@Override
 	public void doOnClose(KubernetesException exception) {
@@ -100,7 +119,7 @@ public class Synchronizer extends KubernetesWatcher {
 		m_logger.severe("caused by" + exception);
 		if (Starter.synchTargets.contains(kind)) {
 			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, 
-								new Synchronizer(kind, kubeClient, sqlClient));
+								new Synchronizer(kind, kubeClient, sqlClient, pusher));
 		}
 		m_logger.info("start synchronizer '" + kind + "'.");
 	}

@@ -3,7 +3,6 @@
  */
 package com.github.kubesys.synchronizer;
 
-import java.lang.reflect.Constructor;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -17,7 +16,6 @@ import com.mysql.cj.jdbc.Driver;
 
 import io.github.kubesys.KubernetesClient;
 import io.github.kubesys.KubernetesConstants;
-import okhttp3.WebSocketListener;
 
 /**
  * @author wuheng@otcaix.iscas.ac.cn
@@ -53,9 +51,10 @@ public class Starter {
 		
 		KubernetesClient srcClient = getKubeClient();
 		MysqlClient dstClient = getSqlClient();
+		Pusher pusher = new Pusher();		
 		createSynchTargetsFromConfifMap(srcClient.getResource(
 					Constants.KIND_CONFIGMAP, Constants.NS_KUBESYSTEM, NAME));
-		synchFromKubeToMysql(srcClient, dstClient);
+		synchFromKubeToMysql(srcClient, dstClient, pusher);
 	}
 
 
@@ -81,26 +80,15 @@ public class Starter {
 	 * 
 	 *****************************************************************************************/
 	
-	protected static void watchKubernetesCRDKinds(KubernetesClient kubeClient, MysqlClient sqlClient) throws Exception {
-		kubeClient.watchResources(Constants.KIND_CUSTOMRESOURCEDEFINTION, 
-							KubernetesConstants.VALUE_ALL_NAMESPACES, 
-							new Synchronizer(Constants.KIND_CUSTOMRESOURCEDEFINTION, kubeClient, sqlClient));
-	}
-
-	public static void synchFromKubeToMysql(KubernetesClient kubeClient, MysqlClient sqlClient) throws Exception {
-		synchFromKubeToMysql(kubeClient, sqlClient, Synchronizer.class.getName());
-	}
-	
-	public static void synchFromKubeToMysql(KubernetesClient kubeClient, MysqlClient sqlClient, String classname) throws Exception {
+	public static void synchFromKubeToMysql(KubernetesClient kubeClient, MysqlClient sqlClient, Pusher pusher) throws Exception {
 		for (String kind : synchTargets) {
 			String tableName = kubeClient.getConfig().getName(kind);
 			sqlClient.createTable(Constants.DB, tableName);
-			Constructor<?> c = Class.forName(classname).getConstructor(String.class, 
-					KubernetesClient.class, MysqlClient.class);
-			WebSocketListener listener = (WebSocketListener) c.newInstance(kind, kubeClient, sqlClient);
-			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, listener);
+			Synchronizer synchronizer = new Synchronizer(kind, kubeClient, sqlClient, pusher);
+			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, synchronizer);
 		}
 	}
+	
 
 	public static void createSynchTargetsFromConfifMap(JsonNode node) throws Exception {
 		

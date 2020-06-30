@@ -76,10 +76,10 @@ public class Utils {
 	 * @param json                           json
 	 * @return                               namespace
 	 */
-	public static String getNamespace(JsonNode json) {
+	public static String getNamespace(JsonNode json, boolean namespaced) {
 		JsonNode meta = json.get(Constants.YAML_METADATA);
 		return (meta.has(Constants.YAML_METADATA_NAMESPACE)) 
-				? meta.get(Constants.YAML_METADATA_NAMESPACE).asText() : "default";
+				? meta.get(Constants.YAML_METADATA_NAMESPACE).asText() : (namespaced ? "default" : "");
 	}
 
 
