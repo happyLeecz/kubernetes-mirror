@@ -126,7 +126,7 @@ public class Starter {
 											data.get("HOST").asText(), 
 											data.get("USER").asText(), 
 											data.get("PASSWORD").asText(), 
-											data.get("PORT").asInt());
+											Integer.parseInt(data.get("PORT").asText()));
 
 		return new AMQClient(factory.newConnection(), data.get("QUEUE").asText());
 	}
