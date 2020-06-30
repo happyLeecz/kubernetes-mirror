@@ -80,7 +80,7 @@ metadata:
   namespace: kube-system
 data:
   DRIVER: com.mysql.cj.jdbc.Driver
-  JDBC: jdbc:mysql://kube-database.kube-system:3306?autoReconnect=TRUE
+  JDBC: jdbc:mysql://kube-database.kube-system:3306
   DATABASE: kube
   USER: root
   PASSWORD: onceas
