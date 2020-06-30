@@ -29,7 +29,7 @@ public class Pusher {
 		factory.setHost("kube-rabbitmq.kube-system");
 		factory.setUsername("root");
 		factory.setPassword("onceas");
-		factory.setPort(30304);
+		factory.setPort(5672);
         Connection connection = factory.newConnection();
         this.channel = connection.createChannel();
         channel.queueDeclare(queueName, false, false, false, null);
