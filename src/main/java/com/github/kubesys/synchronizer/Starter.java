@@ -58,7 +58,8 @@ public class Starter {
 		confirmSynchDataFromConfifMap(kubeClient.getResource(
 					Constants.KIND_CONFIGMAP, Constants.NS_KUBESYSTEM, SYNCH_NAME));
 		
-		dataFromKubeToMysqlAndPushToMQ(kubeClient, sqlClient, getAMQClientBy(kubeClient, AMQP_NAME));
+//		dataFromKubeToMysqlAndPushToMQ(kubeClient, sqlClient, getAMQClientBy(kubeClient, AMQP_NAME));
+		dataFromKubeToMysqlAndPushToMQ(kubeClient, sqlClient, null);
 	}
 
 
@@ -69,13 +70,14 @@ public class Starter {
 	 * 
 	 *****************************************************************************************/
 	
-	public static void dataFromKubeToMysqlAndPushToMQ(KubernetesClient kubeClient, SqlClient sqlClient, AMQClient pusher) throws Exception {
+	public static void dataFromKubeToMysqlAndPushToMQ(KubernetesClient kubeClient, SqlClient sqlClient, AMQClient amqClient) throws Exception {
 		for (String kind : synchTargets) {
 			String tableName = kubeClient.getConfig().getName(kind);
 			sqlClient.createTable(tableName);
-			Synchronizer synchronizer = new Synchronizer(kind, kubeClient, sqlClient, pusher);
+			Synchronizer synchronizer = new Synchronizer(kind, kubeClient, sqlClient, amqClient);
 			kubeClient.watchResources(kind, KubernetesConstants.VALUE_ALL_NAMESPACES, synchronizer);
 		}
+		
 	}
 	
 
