@@ -13,7 +13,7 @@
 
 	<properties>
 		<kubeclient.version>0.7</kubeclient.version>
-		<kubeextclient.version>0.2</kubeextclient.version>
+		<kubeextclient.version>0.3</kubeextclient.version>
 	</properties>
 
 	<dependencies>
