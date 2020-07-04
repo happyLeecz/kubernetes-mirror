@@ -59,7 +59,6 @@ public class Starter {
 					Constants.KIND_CONFIGMAP, Constants.NS_KUBESYSTEM, SYNCH_NAME));
 		
 		dataFromKubeToMysqlAndPushToMQ(kubeClient, sqlClient, getAMQClientBy(kubeClient, AMQP_NAME));
-//		dataFromKubeToMysqlAndPushToMQ(kubeClient, sqlClient, null);
 	}
 
 

@@ -30,7 +30,7 @@ public class Synchronizer extends KubernetesWatcher {
 	
 	protected final SqlClient sqlClient;
 
-	protected final AMQClient ampClient;
+	protected AMQClient ampClient;
 	
 	protected final String kind;
 	
@@ -72,7 +72,7 @@ public class Synchronizer extends KubernetesWatcher {
 					Utils.getNamespace(json, kubeClient.getConfig().isNamespaced(kind)), 
 					Utils.getJsonWithoutAnotation(json));
 			m_logger.info("insert object  " + json + " successfully.");
-			ampClient.send(getJSON("ADDED", json));
+			send(getJSON("ADDED", json));
 		} catch (Exception e) {
 			m_logger.severe("fail to insert object because of missing table " + tableName + ":" + e);
 		}
@@ -85,7 +85,7 @@ public class Synchronizer extends KubernetesWatcher {
 			sqlClient.updateObject(kubeClient.getConfig().getName(kind), Utils.getName(json), 
 					Utils.getNamespace(json, kubeClient.getConfig().isNamespaced(kind)), 
 					Utils.getJsonWithoutAnotation(json));
-			ampClient.send(getJSON("MODIFIED", json));
+			send(getJSON("MODIFIED", json));
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -98,7 +98,7 @@ public class Synchronizer extends KubernetesWatcher {
 			sqlClient.deleteObject(kubeClient.getConfig().getName(kind), Utils.getName(json), 
 					Utils.getNamespace(json, kubeClient.getConfig().isNamespaced(kind)), 
 					Utils.getJsonWithoutAnotation(json));
-			ampClient.send(getJSON("DELETED", json));
+			send(getJSON("DELETED", json));
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -125,5 +125,13 @@ public class Synchronizer extends KubernetesWatcher {
 		m_logger.info("start synchronizer '" + kind + "'.");
 	}
 
+	
+	protected void send(JsonNode json) throws Exception {
+		if (this.ampClient == null) {
+			this.ampClient = Starter.getAMQClientBy(
+					kubeClient, Starter.AMQP_NAME);
+		}
+		this.ampClient.send(json);
+	}
 
 }
