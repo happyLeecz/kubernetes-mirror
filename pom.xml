@@ -12,8 +12,8 @@
 	<url>http://maven.apache.org</url>
 
 	<properties>
-		<kubeclient.version>0.7</kubeclient.version>
-		<kubeextclient.version>0.3</kubeextclient.version>
+		<kubeclient.version>0.8</kubeclient.version>
+		<kubeextclient.version>0.4</kubeextclient.version>
 	</properties>
 
 	<dependencies>
