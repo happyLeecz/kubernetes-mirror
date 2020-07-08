@@ -3,6 +3,7 @@
  */
 package com.github.kubesys.synchronizer;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -106,11 +107,8 @@ public class Starter {
 	 * @throws Exception                     exception
 	 */
 	public static KubernetesClient getKubeClient() throws Exception {
-		String url    = System.getenv("URL");
-		String token  = System.getenv("TOKEN");
-		
-		return (token == null) ?  new KubernetesClient(url)
-								: new KubernetesClient(url, token);
+		return KubernetesClient.getKubeClient(
+				new File(KubernetesClient.ADMIN_CONF));
 	}
 
 	/**
