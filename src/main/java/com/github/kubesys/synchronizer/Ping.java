@@ -3,6 +3,7 @@
  */
 package com.github.kubesys.synchronizer;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.kubesys.KubernetesClient;
 
@@ -37,14 +38,16 @@ public class Ping implements Runnable {
 	@Override
 	public void run() {
 		while (true) {
+
 			try {
-				client.getResource("Namespace", "", "ping");
-				created = true;
-			} catch (Exception ex) {
-				created = false;
-			}
-			
-			try {
+				
+				JsonNode json = client.getResource("Namespace", "", "ping");
+				if (json.get("kind").asText().equals("Namespace")) {
+					created = true;
+				} else {
+					created = false;
+				}
+				
 				if (created) {
 					client.deleteResource("Namespace", "", "ping");
 				} else {
