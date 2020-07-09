@@ -62,7 +62,7 @@ public class Starter {
 		
 		dataFromKubeToMysqlAndPushToMQ(kubeClient, sqlClient, getAMQClientBy(kubeClient, AMQP_NAME));
 		
-		new Thread(new Ping(kubeClient)).start();
+//		new Thread(new Ping(kubeClient)).start();
 		
 	}
 
