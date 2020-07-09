@@ -46,6 +46,7 @@ public class Starter {
 	
 	public static final String AMQP_NAME = "kube-rabbitmq";
 	
+	
 	/*****************************************************************************************
 	 * 
 	 * Main
@@ -60,6 +61,9 @@ public class Starter {
 					Constants.KIND_CONFIGMAP, Constants.NS_KUBESYSTEM, SYNCH_NAME));
 		
 		dataFromKubeToMysqlAndPushToMQ(kubeClient, sqlClient, getAMQClientBy(kubeClient, AMQP_NAME));
+		
+		new Thread(new Ping(kubeClient)).start();
+		
 	}
 
 

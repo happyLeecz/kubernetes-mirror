@@ -54,7 +54,7 @@ spec:
           effect: NoSchedule
       containers:
       - name: "kube-synchronizer"
-        image: "registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-synchronizer:v1.1.0-amd64"
+        image: "registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-synchronizer:v1.2.0-amd64"
         imagePullPolicy: "IfNotPresent"
         command: 
         - "java"
