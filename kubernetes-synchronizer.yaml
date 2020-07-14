@@ -183,19 +183,19 @@ spec:
           effect: NoSchedule
       containers:
       - name: "rabbitmq"
-        image: "bitnami/rabbitmq:3.8.5"
+        image: "rabbitmq:3.8.5-management"
         imagePullPolicy: "IfNotPresent"
         ports:
         - containerPort: 15672  
         - containerPort: 5672  
         env:
-        - name: "RABBITMQ_USERNAME"
+        - name: "RABBITMQ_DEFAULT_USER"
           value: "root"
-        - name: "RABBITMQ_PASSWORD"
+        - name: "RABBITMQ_DEFAULT_PASS"
           value: "onceas" 
         volumeMounts:
         - name: "rabbit-persistent-storage"
-          mountPath: "/bitnami"
+          mountPath: "/var/lib/rabbitmq"
       volumes: 
       - name: "rabbit-persistent-storage"
         hostPath:
