@@ -14,6 +14,7 @@ import com.github.kubesys.KubernetesClient;
 import com.github.kubesys.KubernetesConstants;
 import com.github.kubesys.mqclient.AMQClient;
 import com.github.kubesys.mqclient.AMQUtils;
+import com.github.kubesys.sqlclient.PingSqlServer;
 import com.github.kubesys.sqlclient.SqlClient;
 import com.github.kubesys.sqlclient.SqlUtils;
 import com.rabbitmq.client.ConnectionFactory;
@@ -62,8 +63,7 @@ public class Starter {
 		
 		dataFromKubeToMysqlAndPushToMQ(kubeClient, sqlClient, getAMQClientBy(kubeClient, AMQP_NAME));
 		
-//		new Thread(new Ping(kubeClient)).start();
-		
+		new Thread(new PingSqlServer(sqlClient)).start();
 	}
 
 
