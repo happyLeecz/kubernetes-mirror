@@ -4,8 +4,14 @@
 package com.github.kubesys.synchronizer;
 
 
+import java.io.File;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.kubesys.KubernetesClient;
+import com.github.kubesys.fileclient.FileClient;
+import com.github.kubesys.sqlclient.SqlClient;
+import com.github.kubesys.sqlclient.SqlUtils;
 
 /**
  * @author wuheng
