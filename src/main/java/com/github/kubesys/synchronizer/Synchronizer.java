@@ -15,6 +15,8 @@ import com.github.kubesys.KubernetesWatcher;
 import com.github.kubesys.mqclient.AMQClient;
 import com.github.kubesys.sqlclient.SqlClient;
 
+import okhttp3.WebSocket;
+
 /**
  * @author wuheng
  * @since 2019.4.20
@@ -134,4 +136,11 @@ public class Synchronizer extends KubernetesWatcher {
 		this.ampClient.send(json);
 	}
 
+
+	@Override
+	public void onClosing(WebSocket webSocket, int code, String reason) {
+		super.onClosing(webSocket, code, reason);
+	}
+
+	
 }
