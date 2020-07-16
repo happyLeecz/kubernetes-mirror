@@ -140,6 +140,7 @@ public class Synchronizer extends KubernetesWatcher {
 	@Override
 	public void onClosing(WebSocket webSocket, int code, String reason) {
 		super.onClosing(webSocket, code, reason);
+		System.exit(1);
 	}
 
 	
