@@ -2,7 +2,7 @@
 kind: ConfigMap
 apiVersion: v1
 metadata:
-  name: kube-synchronizer
+  name: kube-mirror
   namespace: kube-system
 data:
   ConfigMap: ConfigMap
@@ -33,19 +33,19 @@ data:
 apiVersion: "apps/v1"
 kind: "Deployment"
 metadata: 
-  name: "kube-synchronizer"
+  name: "kube-mirror"
   namespace: "kube-system"
   labels: 
-    name: "kube-synchronizer"
+    name: "kube-mirror"
 spec: 
   replicas: 1
   selector: 
     matchLabels:
-      name: "kube-synchronizer"
+      name: "kube-mirror"
   template: 
     metadata: 
       labels: 
-        name: "kube-synchronizer"
+        name: "kube-mirror"
     spec:
       nodeSelector:
         node-role.kubernetes.io/master: ""
@@ -53,13 +53,13 @@ spec:
         - key: node-role.kubernetes.io/master
           effect: NoSchedule
       containers:
-      - name: "kube-synchronizer"
-        image: "registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-synchronizer:v1.3.0-amd64"
+      - name: "kube-mirror"
+        image: "registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-mirror:v1.4.0-amd64"
         imagePullPolicy: "IfNotPresent"
         command: 
         - "java"
         - "-jar"
-        - "kubernetes-synchronizer.jar"
+        - "kubernetes-mirror.jar"
         volumeMounts: 
         - name: "kubetoken"
           mountPath: "/etc/kubernetes"
