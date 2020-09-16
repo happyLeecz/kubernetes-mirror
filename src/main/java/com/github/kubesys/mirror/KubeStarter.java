@@ -27,7 +27,7 @@ public class KubeStarter {
 									System.getenv("kubeUrl"), 
 									System.getenv("token"));
 		KubeSqlClient kubeSqlClient = KubeSqlClient.createSqlClient(
-									System.getenv("database"));
+									System.getenv("database") == null ? "kube" : System.getenv("database"));
 		KubeMirror kubeMirror = new KubeMirror(kubeClient, kubeSqlClient);
 		kubeMirror.start();
 	}
