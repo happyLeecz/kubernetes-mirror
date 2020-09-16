@@ -1,7 +1,7 @@
-FROM registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-java-base:jdk8-amd64
+FROM openjdk:11.0.7-slim
 
-ADD kubernetes-synchronizer.jar /home/kubernetes-synchronizer.jar
+RUN mkdir -p /home/kubernetes-mirror
 
-WORKDIR /home
+ADD kubernetes-mirror.jar /home/kubernetes-mirror/
 
-#RUN java -jar kubernetes-synchronizer.jar
+WORKDIR /home/kubernetes-mirror
