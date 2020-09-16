@@ -1,4 +1,4 @@
-# kube-synchronizer
+# kube-mirror
 
 Synchronize Kubernetes resources to mariadb/mysql to support query and recovery.
 
