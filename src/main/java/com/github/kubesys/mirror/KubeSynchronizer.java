@@ -29,19 +29,19 @@ public class KubeSynchronizer extends KubernetesWatcher {
 
 	protected final String table;
 
-	protected final KubeSqlClient sqlClient;
+	protected final KubeSqlClient kubeSqlClient;
 
-	public KubeSynchronizer(String kind, String table, KubernetesClient kubeClient, KubeSqlClient sqlClient) {
+	public KubeSynchronizer(String kind, String table, KubernetesClient kubeClient, KubeSqlClient kubeSqlClient) {
 		super(kubeClient);
 		this.kind = kind;
 		this.table = table;
-		this.sqlClient = sqlClient;
+		this.kubeSqlClient = kubeSqlClient;
 	}
 
 	@Override
 	public void doAdded(JsonNode json) {
 		try {
-			sqlClient.insertObject(table, KubeUtils.getName(json),
+			kubeSqlClient.insertObject(table, KubeUtils.getName(json),
 					KubeUtils.getNamespace(json),
 					KubeUtils.getJsonWithoutAnotation(json));
 			m_logger.info("insert object  " + json + " successfully.");
@@ -53,7 +53,7 @@ public class KubeSynchronizer extends KubernetesWatcher {
 	@Override
 	public void doModified(JsonNode json) {
 		try {
-			sqlClient.updateObject(table, KubeUtils.getName(json),
+			kubeSqlClient.updateObject(table, KubeUtils.getName(json),
 					KubeUtils.getNamespace(json),
 					KubeUtils.getJsonWithoutAnotation(json));
 			m_logger.info("update object  " + json + " successfully.");
@@ -65,7 +65,7 @@ public class KubeSynchronizer extends KubernetesWatcher {
 	@Override
 	public void doDeleted(JsonNode json) {
 		try {
-			sqlClient.deleteObject(table, KubeUtils.getName(json),
+			kubeSqlClient.deleteObject(table, KubeUtils.getName(json),
 					KubeUtils.getNamespace(json),
 					KubeUtils.getJsonWithoutAnotation(json));
 			m_logger.info("delete object  " + json + " successfully.");
@@ -74,4 +74,14 @@ public class KubeSynchronizer extends KubernetesWatcher {
 		}
 	}
 
+	@Override
+	public void doClose() {
+		try {
+			kubeClient.watchResources(kind, new KubeSynchronizer(
+					kind, table, kubeClient, kubeSqlClient));
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(1);
+		}
+	}
 }

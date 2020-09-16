@@ -49,7 +49,7 @@ public class KubeSqlClient {
 			+ "information_schema.TABLES t, information_schema.SCHEMATA n "
 			+ "WHERE t.table_name = '#TABLE#' AND n.SCHEMA_NAME = '#DATBASE#'";
 	
-	public static final String CREATE_TABLE    = "CREATE TABLE #TABLE# (name varchar(50), namespace varchar(50), data json, primary key(name, namespace)) DEFAULT CHARSET=utf8";
+	public static final String CREATE_TABLE    = "CREATE TABLE #TABLE# (name varchar(512), namespace varchar(128), data json, primary key(name, namespace)) DEFAULT CHARSET=utf8";
 	
 	public static final String DELETE_TABLE    = "DROP TABLE #TABLE#";
 	

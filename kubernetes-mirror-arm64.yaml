@@ -1,0 +1,69 @@
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: kube-mirror
+  namespace: kube-system
+data:
+  ConfigMap: ConfigMap
+  Namespace: Namespace
+  Node: Node
+  PersistentVolumeClaim: PersistentVolumeClaim
+  PersistentVolume: PersistentVolume
+  Pod: Pod
+  ReplicationController: ReplicationController
+  Secret: Secret
+  ServiceAccount: ServiceAccount
+  CustomResourceDefinition: CustomResourceDefinition
+  DaemonSet: DaemonSet
+  Deployment: Deployment
+  ReplicaSet: ReplicaSet
+  StatefulSet: StatefulSet
+  CronJob: CronJob
+  Job: Job
+  NetworkPolicy: NetworkPolicy
+  Ingress: Ingress
+  ClusterRoleBinding: ClusterRoleBinding
+  ClusterRole: ClusterRole
+  RoleBinding: RoleBinding
+  Role: Role
+  StorageClass: StorageClass
+  Service: Service
+---
+apiVersion: "apps/v1"
+kind: "Deployment"
+metadata: 
+  name: "kube-mirror"
+  namespace: "kube-system"
+  labels: 
+    name: "kube-mirror"
+spec: 
+  replicas: 1
+  selector: 
+    matchLabels:
+      name: "kube-mirror"
+  template: 
+    metadata: 
+      labels: 
+        name: "kube-mirror"
+    spec:
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      tolerations:
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
+      containers:
+      - name: "kube-mirror"
+        image: "registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-mirror:v1.5.0-arm64"
+        imagePullPolicy: "IfNotPresent"
+        command: 
+        - "java"
+        - "-jar"
+        - "kubernetes-mirror.jar"
+        volumeMounts: 
+        - name: "kubetoken"
+          mountPath: "/etc/kubernetes"
+      volumes: 
+      - name: "kubetoken"
+        hostPath:
+          path: "/etc/kubernetes"

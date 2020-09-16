@@ -25,11 +25,11 @@ public class KubeMirror {
 	
 	public static final String YAML_DATA                            = "data";
 
-	public static final String KIND_CONFIGMAP = "ConfigMap";
+	public static final String KIND_CONFIGMAP                       = "ConfigMap";
 
-	public static final String NS_KUBESYSTEM = "kube-system";
+	public static final String NS_KUBESYSTEM                        = "kube-system";
 
-	public static final String NAME_MIRROR = "kube-mirror";
+	public static final String NAME_MIRROR                          = "kube-mirror";
 
 	/**
 	 * targets
@@ -54,11 +54,13 @@ public class KubeMirror {
 
 	protected KubeMirror toTargets() throws Exception {
 		for (String kind : sources) {
+			
 			String table = kubeClient.getConfig().getName(kind);
 			
 			if (!kubeSqlClient.hasTable(table)) {
 				kubeSqlClient.createTable(table);
 			}
+			
 			kubeClient.watchResources(kind, new KubeSynchronizer(
 							kind, table, kubeClient, kubeSqlClient));
 		}
@@ -66,8 +68,7 @@ public class KubeMirror {
 		return this;
 	}
 
-	public KubeMirror fromSources(JsonNode node) throws Exception {
-
+	public KubeMirror fromSources(JsonNode node) {
 		try {
 			Iterator<JsonNode> elements = node.get(YAML_DATA).elements();
 			while (elements.hasNext()) {

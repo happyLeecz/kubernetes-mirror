@@ -3,8 +3,6 @@
  */
 package com.github.kubesys.mirror;
 
-import java.util.logging.Logger;
-
 import com.github.kubesys.KubernetesClient;
 import com.github.kubesys.mirror.client.KubeSqlClient;
 
@@ -16,11 +14,6 @@ import com.github.kubesys.mirror.client.KubeSqlClient;
  * 
  **/
 public class KubeStarter {
-	
-	/**
-	 * m_logger
-	 */
-	protected static final Logger m_logger = Logger.getLogger(KubeStarter.class.getName());
 	
 	
 	/*****************************************************************************************
@@ -39,7 +32,4 @@ public class KubeStarter {
 		kubeMirror.start();
 	}
 
-
-
-	
 }
