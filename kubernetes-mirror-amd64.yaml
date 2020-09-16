@@ -56,6 +56,11 @@ spec:
       - name: "kube-mirror"
         image: "registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-mirror:v1.5.0-amd64"
         imagePullPolicy: "IfNotPresent"
+        env:
+        - name: kubeUrl
+          value: https://127.0.0.1:6443
+        - name: token
+          value: xxx
         command: 
         - "java"
         - "-jar"
