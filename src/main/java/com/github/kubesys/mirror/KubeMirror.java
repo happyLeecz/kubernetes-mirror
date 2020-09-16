@@ -22,22 +22,20 @@ public class KubeMirror {
 	 * m_logger
 	 */
 	public static final Logger m_logger = Logger.getLogger(KubeMirror.class.getName());
-	
-	public static final String YAML_DATA                            = "data";
-
-	public static final String KIND_CONFIGMAP                       = "ConfigMap";
-
-	public static final String NS_KUBESYSTEM                        = "kube-system";
-
-	public static final String NAME_MIRROR                          = "kube-mirror";
 
 	/**
-	 * targets
+	 * sources
 	 */
 	public Set<String> sources = new HashSet<>();
 
+	/**
+	 * kube client
+	 */
 	protected final KubernetesClient kubeClient;
 
+	/**
+	 * sql client
+	 */
 	protected final KubeSqlClient kubeSqlClient;
 
 	public KubeMirror(KubernetesClient kubeClient, KubeSqlClient kubeSqlClient) {
@@ -46,28 +44,55 @@ public class KubeMirror {
 		this.kubeSqlClient = kubeSqlClient;
 	}
 
+	/**
+	 * Kind
+	 */
+	public static final String KIND_CONFIGMAP = "ConfigMap";
+
+	/**
+	 * Namespace
+	 */
+	public static final String NS_KUBESYSTEM = "kube-system";
+
+	/**
+	 * name
+	 */
+	public static final String NAME_MIRROR = "kube-mirror";
+	
+	/**
+	 * @throws Exception                    exception
+	 */
 	public void start() throws Exception {
-		fromSources(kubeClient.getResource(KIND_CONFIGMAP, 
-							NS_KUBESYSTEM, NAME_MIRROR))
+		fromSources(kubeClient.getResource(KIND_CONFIGMAP, NS_KUBESYSTEM, NAME_MIRROR))
 		.toTargets();
 	}
 
+	/**
+	 * @return                              mirror
+	 * @throws Exception                    exception
+	 */
 	protected KubeMirror toTargets() throws Exception {
 		for (String kind : sources) {
-			
+
 			String table = kubeClient.getConfig().getName(kind);
-			
+
 			if (!kubeSqlClient.hasTable(table)) {
 				kubeSqlClient.createTable(table);
 			}
-			
-			kubeClient.watchResources(kind, new KubeSynchronizer(
-							kind, table, kubeClient, kubeSqlClient));
+
+			kubeClient.watchResources(kind, new KubeSynchronizer(kind, table, kubeClient, kubeSqlClient));
 		}
-		
+
 		return this;
 	}
 
+	public static final String YAML_DATA = "data";
+	
+	
+	/**
+	 * @param node                           node
+	 * @return                               mirror
+	 */
 	public KubeMirror fromSources(JsonNode node) {
 		try {
 			Iterator<JsonNode> elements = node.get(YAML_DATA).elements();
@@ -76,10 +101,10 @@ public class KubeMirror {
 				sources.add(asText);
 			}
 		} catch (Exception ex) {
-			m_logger.severe("ConfigMap 'kubernetes-mirror' is not " + "				ready in namespace 'kube-system'.");
+			m_logger.severe("ConfigMap 'kubernetes-mirror' is not ready in namespace 'kube-system'.");
 			System.exit(1);
 		}
-		
+
 		return this;
 	}
 }

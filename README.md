@@ -14,6 +14,26 @@ This project is based on :
 https://raw.githubusercontent.com/kubesys/kubernetes-synchronizer/master/kubernetes-synchronizer.yaml
 ```
 
+### Maven users
+
+Add this dependency to your project's POM:
+
+```xml
+<dependency>
+  <groupId>com.github.kubesys</groupId>
+  <artifactId>kubernetes-mirror</artifactId>
+  <version>1.6.0</version> 
+</dependency>
+
+<repositories>
+   <repository>
+       <id>pdos-repos</id>
+       <name>PDOS Releases</name>
+       <url>http://39.106.40.190:8081/repository/maven-public/</url>
+    </repository>
+</repositories>
+```
+
 Then, please edit 'Deployment' named 'kubernetes-synchronizer' in namespace 'kube-system', update env 'URL' and 'TOKEN' as described in [kubernetes-client](https://github.com/kubesys/kubernetes-client).
 
 ## Build

@@ -3,8 +3,6 @@
  */
 package com.github.kubesys.mirror;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -21,14 +19,18 @@ public class KubeSynchronizer extends KubernetesWatcher {
 	public static final Logger m_logger = Logger.getLogger(KubeSynchronizer.class.getName());
 
 	/**
-	 * targets
+	 * kind
 	 */
-	protected static final Set<String> synchTargets = new HashSet<>();
-
 	protected final String kind;
 
+	/**
+	 * table
+	 */
 	protected final String table;
 
+	/**
+	 * sqlClient
+	 */
 	protected final KubeSqlClient kubeSqlClient;
 
 	public KubeSynchronizer(String kind, String table, KubernetesClient kubeClient, KubeSqlClient kubeSqlClient) {
@@ -80,7 +82,6 @@ public class KubeSynchronizer extends KubernetesWatcher {
 			kubeClient.watchResources(kind, new KubeSynchronizer(
 					kind, table, kubeClient, kubeSqlClient));
 		} catch (Exception e) {
-			e.printStackTrace();
 			System.exit(1);
 		}
 	}

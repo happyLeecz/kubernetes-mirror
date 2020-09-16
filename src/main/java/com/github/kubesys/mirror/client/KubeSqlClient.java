@@ -36,8 +36,6 @@ public class KubeSqlClient {
 	public static final String LABEL_JSON       = "#JSON#";
 	
 	
-	
-	
 	public static final String CHECK_DATABASE  = "SELECT * FROM information_schema.SCHEMATA where SCHEMA_NAME='#DATBASE#'";
 	
 	public static final String CREATE_DATABASE = "CREATE DATABASE #DATBASE# CHARACTER SET utf8 COLLATE utf8_general_ci";
