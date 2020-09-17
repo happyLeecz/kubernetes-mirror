@@ -94,9 +94,11 @@ public class KubeMirror {
 	protected void doWatcher(String kind) throws Exception {
 		String table = kubeClient.getConfig().getName(kind);
 
-		if (!kubeSqlClient.hasTable(table)) {
-			kubeSqlClient.createTable(table);
-		}
+		if (kubeSqlClient.hasTable(table)) {
+			kubeSqlClient.dropTable(table);
+		} 
+		
+		kubeSqlClient.createTable(table);
 
 		KubeSynchronizer watcher = new KubeSynchronizer(kind, table, kubeClient, kubeSqlClient);
 		watchers.put(table, watcher);
