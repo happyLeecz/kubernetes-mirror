@@ -23,6 +23,10 @@ public class KubeStarter {
 	 * 
 	 *****************************************************************************************/
 
+	/**
+	 * @param args                               args
+	 * @throws Exception                         exception
+	 */
 	public static void main(String[] args) throws Exception {
 		KubernetesClient kubeClient = new KubernetesClient(
 									System.getenv("kubeUrl"), 

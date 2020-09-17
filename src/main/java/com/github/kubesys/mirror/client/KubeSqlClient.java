@@ -122,10 +122,11 @@ public class KubeSqlClient {
 		return execWithResultCheck(null, CHECK_DATABASE.replace(LABEL_DATABASE, database));
 	}
 	
-	/**
+	/** 
 	 * create database
 	 * 
-	 * @throws Exception mysql exception
+	 * @return                             true or false
+	 * @throws Exception                   mysql exception
 	 */
 	public synchronized boolean createDatabase() throws Exception {
 		return exec(null, CREATE_DATABASE.replace(LABEL_DATABASE, database));
