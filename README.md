@@ -23,7 +23,7 @@ Add this dependency to your project's POM:
 <dependency>
   <groupId>com.github.kubesys</groupId>
   <artifactId>kubernetes-mirror</artifactId>
-  <version>1.6.0</version> 
+  <version>1.7.0</version> 
 </dependency>
 
 <repositories>
@@ -111,4 +111,5 @@ kubectl edt cm kubernetes-synchronizer -n kube-system
 ## Roadmap
 
 - 1.5.0 support customized database
+- 1.7.0 support dyanmic watch CRD
 

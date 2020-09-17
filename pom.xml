@@ -5,14 +5,14 @@
 
 	<groupId>com.github.kubesys</groupId>
 	<artifactId>kubernetes-mirror</artifactId>
-	<version>1.6.0</version>
+	<version>1.7.0</version>
 	<packaging>jar</packaging>
 
 	<name>kubernetes-mirror</name>
 	<url>http://maven.apache.org</url>
 
 	<properties>
-		<kubeclient.version>1.7.0</kubeclient.version>
+		<kubeclient.version>1.8.0</kubeclient.version>
 		<jdbc.version>8.0.21</jdbc.version>
 		<druid.version>1.1.23</druid.version>
 	</properties>

@@ -3,13 +3,16 @@
  */
 package com.github.kubesys.mirror;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.kubesys.KubernetesClient;
+import com.github.kubesys.KubernetesWatcher;
 import com.github.kubesys.mirror.client.KubeSqlClient;
 
 /**
@@ -37,7 +40,13 @@ public class KubeMirror {
 	 * sql client
 	 */
 	protected final KubeSqlClient kubeSqlClient;
-
+	
+	
+	/**
+	 * threads
+	 */
+	protected final Map<String, KubernetesWatcher> watchers = new HashMap<>();
+	
 	public KubeMirror(KubernetesClient kubeClient, KubeSqlClient kubeSqlClient) {
 		super();
 		this.kubeClient = kubeClient;
@@ -73,17 +82,35 @@ public class KubeMirror {
 	 */
 	protected KubeMirror toTargets() throws Exception {
 		for (String kind : sources) {
+			doWatcher(kind);
+		}
+		return this;
+	}
 
-			String table = kubeClient.getConfig().getName(kind);
+	/**
+	 * @param kind                          kind
+	 * @throws Exception                    exception
+	 */
+	protected void doWatcher(String kind) throws Exception {
+		String table = kubeClient.getConfig().getName(kind);
 
-			if (!kubeSqlClient.hasTable(table)) {
-				kubeSqlClient.createTable(table);
-			}
-
-			kubeClient.watchResources(kind, new KubeSynchronizer(kind, table, kubeClient, kubeSqlClient));
+		if (!kubeSqlClient.hasTable(table)) {
+			kubeSqlClient.createTable(table);
 		}
 
-		return this;
+		KubeSynchronizer watcher = new KubeSynchronizer(kind, table, kubeClient, kubeSqlClient);
+		watchers.put(table, watcher);
+		kubeClient.watchResources(kind, watcher);
+	}
+	
+	/**
+	 * @param kind                          kind
+	 * @throws Exception                    exception
+	 */
+	@SuppressWarnings("deprecation")
+	protected void stopWatcher(String kind) throws Exception {
+		String table = kubeClient.getConfig().getName(kind);
+		watchers.get(table).stop();
 	}
 
 	public static final String YAML_DATA = "data";
@@ -107,4 +134,27 @@ public class KubeMirror {
 
 		return this;
 	}
+	
+	public void addSource(String kind) {
+		if (!sources.contains(kind)) {
+			sources.add(kind);
+			try {
+				doWatcher(kind);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public void deleteSource(String kind) {
+		if (sources.contains(kind)) {
+			sources.remove(kind);
+			try {
+				stopWatcher(kind);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
 }

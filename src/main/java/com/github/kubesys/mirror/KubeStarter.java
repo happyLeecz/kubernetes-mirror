@@ -4,6 +4,7 @@
 package com.github.kubesys.mirror;
 
 import com.github.kubesys.KubernetesClient;
+import com.github.kubesys.KubernetesConstants;
 import com.github.kubesys.mirror.client.KubeSqlClient;
 
 /**
@@ -30,6 +31,10 @@ public class KubeStarter {
 									System.getenv("database") == null ? "kube" : System.getenv("database"));
 		KubeMirror kubeMirror = new KubeMirror(kubeClient, kubeSqlClient);
 		kubeMirror.start();
+		
+		kubeClient.watchResources("CustomResourceDefinition", 
+				KubernetesConstants.VALUE_ALL_NAMESPACES, 
+				new KubeWatcher(kubeClient, kubeMirror));
 	}
 
 }
