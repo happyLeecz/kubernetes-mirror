@@ -35,33 +35,11 @@ public class KubeStarter {
 									System.getenv("database") == null ? "kube" : System.getenv("database"));
 		KubeMirror kubeMirror = new KubeMirror(kubeClient, kubeSqlClient);
 		kubeMirror.start();
-		new Thread(new Daemon(kubeClient)).start();
 		
 		kubeClient.watchResources("CustomResourceDefinition", 
 				KubernetesConstants.VALUE_ALL_NAMESPACES, 
 				new KubeWatcher(kubeClient, kubeMirror));
 	}
 	
-	public static class Daemon implements Runnable {
-
-		protected final KubernetesClient client;
-		
-		public Daemon(KubernetesClient client) {
-			super();
-			this.client = client;
-		}
-
-		@Override
-		public void run() {
-			while(true) {
-				try {
-					client.listResources("Namespace");
-					Thread.sleep(1000*60*30);
-				} catch (Exception e) {
-				}
-			}
-		}
-		
-	}
-
+	
 }
