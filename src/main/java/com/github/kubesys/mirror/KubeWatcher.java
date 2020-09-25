@@ -3,10 +3,13 @@
  */
 package com.github.kubesys.mirror;
 
+
+import java.util.Set;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.kubesys.KubernetesClient;
-import com.github.kubesys.KubernetesConstants;
-import com.github.kubesys.watchers.AutoDiscoverCustomizedResourcesWacther;
+import com.github.kubesys.KubernetesWatcher;
+import com.github.kubesys.mirror.client.KubeSqlClient;
 
 /**
  * @author wuheng@otcaix.iscas.ac.cn
@@ -15,39 +18,89 @@ import com.github.kubesys.watchers.AutoDiscoverCustomizedResourcesWacther;
  * @since 2020.2.15
  * 
  **/
-public class KubeWatcher extends AutoDiscoverCustomizedResourcesWacther {
+public class KubeWatcher extends KubernetesWatcher {
 
-	protected final KubeMirror mirror;
 	
-	public KubeWatcher(KubernetesClient client, KubeMirror mirror) {
+	protected final KubeMirror kubeMirror;
+	
+	protected final KubeSqlClient sqlClient;
+	
+	public KubeWatcher(KubernetesClient client, KubeMirror kubeMirror, KubeSqlClient sqlClient) {
 		super(client);
-		this.mirror = mirror;
+		this.kubeMirror = kubeMirror;
+		this.sqlClient = sqlClient;
 	}
 
 	@Override
 	public void doAdded(JsonNode node) {
-		super.doAdded(node);
-		mirror.addSource(node.get(
-				KubernetesConstants.KUBE_SPEC_NAMES_KIND).asText());
+		try {
+			for (String kind : kubeMirror.createSources()) {
+				startWatcher(kind);
+			}
+		} catch (Exception e) {
+		}
 	}
 
 	@Override
 	public void doDeleted(JsonNode node) {
-		super.doDeleted(node);
-		mirror.deleteSource(node.get(
-				KubernetesConstants.KUBE_SPEC_NAMES_KIND).asText());
-	}
-
-	@Override
-	public void doClose() {
+		// ignore here
 		try {
-			this.kubeClient.watchResources("CustomResourceDefinition", 
-					KubernetesConstants.VALUE_ALL_NAMESPACES, 
-					new KubeWatcher(kubeClient, mirror));
+			for (String kind : kubeMirror.getSources()) {
+				stopWatcher(kind); 
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
+	@Override
+	public void doModified(JsonNode node) {
+		
+		try {
+			Set<String> current = kubeMirror.createSources();
+			
+			for (String kind : current) {
+				startWatcher(kind);
+			}
+			
+			for (String kind : kubeMirror.getSources()) {
+				if (current.contains(kind)) {
+					continue;
+				}
+				
+				stopWatcher(kind);
+			}
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	protected void startWatcher(String kind) throws Exception {
+		if (kubeMirror.beenWatched(kind)) {
+			return;
+		}
+		
+		kubeMirror.addSource(kind);
+	}
 	
+	protected void stopWatcher(String kind) throws Exception {
+		
+		if (!kubeMirror.beenWatched(kind)) {
+			return;
+		}
+		
+		kubeMirror.deleteSource(kind);
+	}
+
+	@Override
+	public void doClose() {
+		try {
+			this.kubeClient.watchResource("ConfigMap", "kube-system", "kube-mirror",
+					new KubeWatcher(kubeClient, kubeMirror, sqlClient));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 }

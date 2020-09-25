@@ -23,7 +23,7 @@ Add this dependency to your project's POM:
 <dependency>
   <groupId>com.github.kubesys</groupId>
   <artifactId>kubernetes-mirror</artifactId>
-  <version>1.8.0</version> 
+  <version>1.9.0</version> 
 </dependency>
 
 <repositories>

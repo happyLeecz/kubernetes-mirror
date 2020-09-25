@@ -12,7 +12,6 @@ import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.kubesys.KubernetesClient;
-import com.github.kubesys.KubernetesWatcher;
 import com.github.kubesys.mirror.client.KubeSqlClient;
 
 /**
@@ -45,9 +44,9 @@ public class KubeMirror {
 	/**
 	 * threads
 	 */
-	protected final Map<String, KubernetesWatcher> watchers = new HashMap<>();
+	protected final Map<String, Thread> watchers = new HashMap<>();
 	
-	public KubeMirror(KubernetesClient kubeClient, KubeSqlClient kubeSqlClient) {
+	public KubeMirror(KubernetesClient kubeClient, KubeSqlClient kubeSqlClient) throws Exception {
 		super();
 		this.kubeClient = kubeClient;
 		this.kubeSqlClient = kubeSqlClient;
@@ -72,8 +71,7 @@ public class KubeMirror {
 	 * @throws Exception                    exception
 	 */
 	public void start() throws Exception {
-		fromSources(kubeClient.getResource(KIND_CONFIGMAP, NS_KUBESYSTEM, NAME_MIRROR))
-		.toTargets();
+		fromSources().toTargets();
 	}
 
 	/**
@@ -101,8 +99,7 @@ public class KubeMirror {
 		kubeSqlClient.createTable(table);
 
 		KubeSynchronizer watcher = new KubeSynchronizer(kind, table, kubeClient, kubeSqlClient);
-		watchers.put(table, watcher);
-		kubeClient.watchResources(kind, watcher);
+		watchers.put(table, kubeClient.watchResources(kind, watcher));
 	}
 	
 	/**
@@ -112,29 +109,41 @@ public class KubeMirror {
 	@SuppressWarnings("deprecation")
 	protected void stopWatcher(String kind) throws Exception {
 		String table = kubeClient.getConfig().getName(kind);
+		if (kubeSqlClient.hasTable(table)) {
+			kubeSqlClient.dropTable(table);
+		} 
 		watchers.get(table).stop();
+		watchers.remove(table);
 	}
 
 	public static final String YAML_DATA = "data";
 	
 	
 	/**
-	 * @param node                           node
 	 * @return                               mirror
+	 * @throws Exception                     exception
 	 */
-	public KubeMirror fromSources(JsonNode node) {
+	public KubeMirror fromSources() throws Exception {
 		try {
-			Iterator<JsonNode> elements = node.get(YAML_DATA).elements();
-			while (elements.hasNext()) {
-				String asText = elements.next().asText();
-				sources.add(asText);
-			}
+			this.sources = createSources();
 		} catch (Exception ex) {
 			m_logger.severe("ConfigMap 'kubernetes-mirror' is not ready in namespace 'kube-system'.");
 			System.exit(1);
 		}
 
 		return this;
+	}
+
+	public Set<String> createSources() throws Exception {
+		JsonNode node = kubeClient.getResource(
+				KIND_CONFIGMAP, NS_KUBESYSTEM, NAME_MIRROR);
+		Set<String> kinds = new HashSet<>();
+		Iterator<JsonNode> elements = node.get(YAML_DATA).elements();
+		while (elements.hasNext()) {
+			String asText = elements.next().asText();
+			kinds.add(asText);
+		}
+		return kinds;
 	}
 	
 	public void addSource(String kind) {
@@ -157,6 +166,15 @@ public class KubeMirror {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	public Set<String> getSources() {
+		return sources;
+	}
+
+	public boolean beenWatched(String kind) {
+		String table = kubeClient.getConfig().getName(kind);
+		return watchers.containsKey(table);
 	}
 
 }

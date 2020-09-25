@@ -54,7 +54,7 @@ spec:
           effect: NoSchedule
       containers:
       - name: "kube-mirror"
-        image: "registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-mirror:v1.8.1-amd64"
+        image: "registry.cn-beijing.aliyuncs.com/kubesys/kubernetes-mirror:v1.9.0-amd64"
         imagePullPolicy: "IfNotPresent"
         env:
         - name: kubeUrl
