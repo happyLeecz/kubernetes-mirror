@@ -90,7 +90,7 @@ public class KubeMirror {
 	 * @throws Exception                    exception
 	 */
 	protected void doWatcher(String kind) throws Exception {
-		String table = kubeClient.getConfig().getName(kind);
+		String table = kubeClient.getAnalyzer().getConfig().getName(kind);
 
 		if (kubeSqlClient.hasTable(table)) {
 			kubeSqlClient.dropTable(table);
@@ -108,7 +108,7 @@ public class KubeMirror {
 	 */
 	@SuppressWarnings("deprecation")
 	protected void stopWatcher(String kind) throws Exception {
-		String table = kubeClient.getConfig().getName(kind);
+		String table = kubeClient.getAnalyzer().getConfig().getName(kind);
 		if (kubeSqlClient.hasTable(table)) {
 			kubeSqlClient.dropTable(table);
 		} 
@@ -173,7 +173,7 @@ public class KubeMirror {
 	}
 
 	public boolean beenWatched(String kind) {
-		String table = kubeClient.getConfig().getName(kind);
+		String table = kubeClient.getAnalyzer().getConfig().getName(kind);
 		return watchers.containsKey(table);
 	}
 
