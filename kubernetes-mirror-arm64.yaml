@@ -5,6 +5,7 @@ metadata:
   name: kube-mirror
   namespace: kube-system
 data:
+  Frontend: Frontend
   User: User
   UserRole: UserRole
   ConfigMap: ConfigMap

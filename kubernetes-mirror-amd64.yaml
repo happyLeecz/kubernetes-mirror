@@ -28,6 +28,7 @@ data:
   ClusterRoleBinding: ClusterRoleBinding
   ClusterRole: ClusterRole
   RoleBinding: RoleBinding
+  Frontend: Frontend
   Role: Role
   StorageClass: StorageClass
   Service: Service
