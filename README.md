@@ -114,3 +114,4 @@ kubectl edt cm kubernetes-synchronizer -n kube-system
 - 1.7.0 support dyanmic watch CRD
 - 1.8.1 fix watch timeout
 - 1.9.0 support dynamic create and delete tables
+- 1.10.0 testing version
